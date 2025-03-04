@@ -22,10 +22,6 @@ export function datalogFromUnits(units: sol.SourceUnit[], infer: sol.InferType):
     ].join("\n");
 }
 
-/**
- * typeString's behavior is inconsistent across AST versions. Sometimes it can be
- * null or undefined. Normalize to ""
- */
 function translateNode(nd: sol.ASTNode, infer: sol.InferType): string[] {
     const res: string[] = [];
 
