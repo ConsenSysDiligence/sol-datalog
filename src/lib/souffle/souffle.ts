@@ -51,8 +51,8 @@ export async function analyze(
     infer: sol.InferType,
     mode: dl.SouffleOutputType,
     outputRelations: dl.Relation[]
-): Promise<dl.Result> {
+): Promise<dl.FactSet> {
     const datalog = buildDatalog(units, infer);
 
-    return await dl.run(datalog, outputRelations, mode, DIST_SO_DIR);
+    return await dl.runInterp(datalog, outputRelations, mode, DIST_SO_DIR);
 }
