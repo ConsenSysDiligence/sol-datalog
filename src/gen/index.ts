@@ -1,2 +1,2 @@
-export { preamble } from "./declarations";
-export { translateASTNodeInternal } from "./translate";
+export const GEN_DIR = __dirname;
+export { accumulateNodeFacts } from "./translate";

@@ -1,42 +1,30 @@
 import * as sol from "solc-typed-ast";
-import { flatten } from "./utils";
-import { preamble, translateASTNodeInternal } from "../gen";
+import * as rlns from "../gen/ast_facts";
+import { accumulateNodeFacts } from "../gen";
+import { CSVFactSet, Fact, FactSet } from "souffle.ts";
 
-function facts(units: sol.SourceUnit[], infer: sol.InferType): string[] {
-    const res = flatten(units.map((unit) => translateUnit(unit, infer)));
+export function facts(units: sol.SourceUnit[], infer: sol.InferType): FactSet {
+    const fs = new CSVFactSet(rlns.INPUT_RELATIONS);
+    fs.initializeEmpty();
+
+    for (const unit of units) {
+        unit.walk((nd) => translateNode(nd, infer, fs));
+    }
 
     const version = infer.version.split(".").map((x) => Number(x));
 
     sol.assert(version.length === 3, `Expected version tripple not ${infer.version}`);
-    res.push(`CompilerVersion(${version[0]}, ${version[1]}, ${version[2]}).`);
+    fs.addFacts(
+        new Fact(rlns.CompilerVersion, [Number(version[0]), Number(version[1]), Number(version[2])])
+    );
 
-    return res;
+    return fs;
 }
 
-export function datalogFromUnits(units: sol.SourceUnit[], infer: sol.InferType): string {
-    return [
-        "// ======= PREAMBLE =======",
-        preamble,
-        "// ======= FACTS =======",
-        ...facts(units, infer)
-    ].join("\n");
-}
-
-function translateNode(nd: sol.ASTNode, infer: sol.InferType): string[] {
-    const res: string[] = [];
-
+function translateNode(nd: sol.ASTNode, infer: sol.InferType, fs: FactSet): void {
     if (nd.parent) {
-        res.push(`parent(${nd.parent.id}, ${nd.id}).`);
+        fs.addFacts(new Fact(rlns.parent, [nd.parent.id, nd.id]));
     }
 
-    res.push(...translateASTNodeInternal(nd, infer));
-    return res;
-}
-
-function translateUnit(unit: sol.SourceUnit, infer: sol.InferType): string[] {
-    const res: string[] = [];
-
-    unit.walk((nd) => res.push(...translateNode(nd, infer)));
-
-    return res;
+    accumulateNodeFacts(nd, infer, fs);
 }
