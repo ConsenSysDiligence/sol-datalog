@@ -14,8 +14,8 @@
     "scripts": {
         "clean": "rm -rf dist/ && rm -rf src/gen/declarations.ts src/gen/translate.ts souffle_parser_gen.js souffle_value_parser_gen.js",
         "transpile": "tsc",
-        "gen-translation-modules": "node scripts/gen_translation_modules.js && eslint --fix src/gen/translate.ts src/gen/declarations.ts",
-        "copy-dl": "cp -r src/lib/analyses dist/lib && cp -r src/lib/detectors dist/lib",
+        "gen-translation-modules": "node scripts/gen_translation_modules.js && eslint --fix src/gen/translate.ts src/gen/ast_facts.ts",
+        "copy-dl": "cp -r src/lib/analyses dist/lib && cp -r src/lib/detectors dist/lib && cp src/gen/ast.dl dist/gen",
         "copy-functors": "cp -r src/functors dist/",
         "build-functors": "./scripts/build_functors.sh",
         "build-preamble": "npm run gen-translation-modules",
@@ -36,7 +36,7 @@
         "solc-typed-ast": "^18.2.4",
         "sqlite": "^5.1.1",
         "sqlite3": "^5.1.7",
-        "souffle.ts": "0.2.2"
+        "souffle.ts": "^0.3.0"
     },
     "devDependencies": {
         "@ts-ast-parser/core": "^0.7.0",
