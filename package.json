@@ -19,7 +19,8 @@
         "copy-functors": "cp -r src/functors dist/",
         "build-functors": "./scripts/build_functors.sh",
         "build-preamble": "npm run gen-translation-modules",
-        "build-full": "npm run clean && npm run build-preamble && npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl && npm run build-functors && npm run copy-functors",
+        "compile-program": "ts-node scripts/compile_program.ts",
+        "build-full": "npm run clean && npm run build-preamble && npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl && npm run build-functors && npm run copy-functors && npm run compile-program",
         "build": "npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl",
         "quick-build": "npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl",
         "test": "c8 mocha",
@@ -34,9 +35,9 @@
         "dotenv": "^16.4.5",
         "fs-extra": "^11.2.0",
         "solc-typed-ast": "^18.2.4",
+        "souffle.ts": "^0.3.0",
         "sqlite": "^5.1.1",
-        "sqlite3": "^5.1.7",
-        "souffle.ts": "^0.3.0"
+        "sqlite3": "^5.1.7"
     },
     "devDependencies": {
         "@ts-ast-parser/core": "^0.7.0",
@@ -51,11 +52,11 @@
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-prettier": "^5.1.3",
         "expect": "^29.7.0",
+        "jison": "^0.4.18",
         "mocha": "^10.3.0",
         "prettier": "3.2.5",
         "ts-node": "^10.9.2",
-        "typescript": "^5.3.3",
-        "jison": "^0.4.18"
+        "typescript": "^5.3.3"
     },
     "repository": {
         "type": "git",
