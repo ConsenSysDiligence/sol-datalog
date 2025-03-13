@@ -2,7 +2,8 @@ abstract contract Base {
   function foo() external virtual returns(uint);
   uint public bar;
 
-  function boo() internal virtual returns(uint) {}
+  modifier Noop() { _; }
+  function boo() Noop() internal virtual returns(uint) {}
 
   modifier Foo() virtual;
   //modifier Doo() virtual;
