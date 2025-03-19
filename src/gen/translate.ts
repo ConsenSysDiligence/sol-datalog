@@ -1,5 +1,5 @@
 import * as sol from "solc-typed-ast";
-import * as rln from "./ast_facts";
+import * as rln from "./ast_relations";
 import { sanitizeString, translateVal } from "../lib/utils";
 import { FactSet, Fact } from "souffle.ts";
 

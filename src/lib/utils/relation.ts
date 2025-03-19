@@ -1,16 +1,8 @@
-import {
-    assert,
-    ASTContext,
-    ASTNode,
-    ASTNodeConstructor,
-    ContractDefinition,
-    FunctionDefinition,
-    pp
-} from "solc-typed-ast";
+import { assert, ASTContext, ASTNode, ASTNodeConstructor, pp } from "solc-typed-ast";
 import * as DL from "souffle.ts";
 
 export type RelationFieldT = ASTNodeConstructor<ASTNode> | string;
-export type RelationField = ASTNode | string | number | boolean | string[];
+export type RelationField = ASTNode | string | number | boolean | ASTNode[];
 
 const stringTypeAliases = new Set([
     "ContractKind",
@@ -65,15 +57,11 @@ function liftValue(val: DL.FieldVal, type: DL.DatalogType, ctx: ASTContext): Rel
 
     if (type instanceof DL.RecordT) {
         if (type.name === "NumPath") {
-            const res: string[] = [];
+            const res: ASTNode[] = [];
 
             while (val !== null) {
-                const fun = ctx.locate(Number((val as DL.RecordVal).head)) as FunctionDefinition;
-                const name =
-                    fun.vScope instanceof ContractDefinition
-                        ? `${fun.vScope.name}:${fun.name}`
-                        : fun.name;
-                res.push(name);
+                const node = ctx.locate(Number((val as DL.RecordVal).head));
+                res.push(node);
                 val = (val as DL.RecordVal).tail;
             }
 

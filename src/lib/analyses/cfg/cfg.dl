@@ -1,4 +1,5 @@
 .comp CFG {
+    .init domStmt = DominateStmt
     .init dom = Dominate
     .init succ = Successor
 }

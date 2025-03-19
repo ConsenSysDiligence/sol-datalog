@@ -36,13 +36,18 @@ export const AVAILABLE_ANALYSES: dl.Relation[] = [
         ["childNode", IdT],
         ["baseFun", IdT]
     ]),
-    new dl.Relation("cfg.dom.dominateStmt", [
+    new dl.Relation("cfg.domStmt.path", [
         ["pred", IdT],
         ["succ", IdT]
     ]),
     new dl.Relation("cfg.dom.dominate", [
         ["pred", IdT],
         ["succ", IdT]
+    ]),
+    new dl.Relation("cfg.dom.path", [
+        ["pred", IdT],
+        ["succ", IdT],
+        ["path", NumPathT]
     ]),
     new dl.Relation("cfg.succ.succ", [
         ["prev", IdT],

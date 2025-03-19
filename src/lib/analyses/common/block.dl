@@ -1,0 +1,28 @@
+// True if nd is a checked or unchecked block
+.decl isBlock(nd: id) 
+isBlock(nd) :- (Block(nd) ; UncheckedBlock(nd)).
+
+// Helper functions for uniformly handling Blocks and UncheckedBlocks
+.decl AnyBlock_statements(block: id, stmt: id, idx: number)
+AnyBlock_statements(block, stmt, idx) :-
+    Block_statements(block, stmt, idx);
+    UncheckedBlock_statements(block, stmt, idx).
+
+// Helper relation to check if a block is practically non-empty (i.e. it has a
+// statement that is not a block itself)
+.decl Block_isNonEmpty(id: id)
+Block_isNonEmpty(id) :-
+    isBlock(id),
+    AnyBlock_statements(id, stmt, _),
+    !isBlock(stmt).
+
+.decl Block_isEmpty(id: id)
+Block_isEmpty(id) :-
+    isBlock(id),
+    !Block_isNonEmpty(id).
+
+.decl Statement_isUnchecked(s: id)
+Statement_isUnchecked(s) :-
+    Statement(s),
+    ancestor(block, s),
+    UncheckedBlock(block).

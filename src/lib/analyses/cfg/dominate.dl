@@ -1,89 +1,539 @@
 .comp Dominate : IdGraph {
-    .init domStmt = DominateStmt
+    .decl dominate(prev: id, next: id)
+    /// Helper relation to identify the child of a compound statement/expression that dominates all of other children of the statement/expression (if any).
+    .decl dom_first(parent: id, child: id)
 
-    /// Dominate inherits from dominateStmt for statements
-    edge(pred, succ) :- domStmt.edge(pred, succ).
+    // Primitive expressions with nothing inside
+    // ---- Identifier, Literal, ElementaryTypeNameExpression
+    dom_first(id, id) :- Identifier(id) ; Literal(id) ; ElementaryTypeNameExpression(id).
 
-    /// If statement A dominates statement B, A dominates all expressions in B
-    edge(pred, succ) :-
-        Statement(pred),
-        Statement(B),
-        domStmt.edge(pred, B),
-        ancestor(B, succ),
-        Expression(succ).
+    // ---- Unary Operation
+    dom_first(parent, first) :-
+        UnaryOperation_subExpression(parent, subExpr),
+        dom_first(subExpr, first).
 
-    /// All expressions "syntactically" inside a statement must evaluate before its
-    /// conisdered "executed"
-    edge(pred, succ) :-
-        Statement(succ),
-        ancestor(succ, pred),
-        Expression(pred).
+    // Sub-expression dominates the whole expression
+    dominate(prev, next) :-
+        UnaryOperation_subExpression(next, prev).
 
-    /// All expressions "syntactically" inside another expression must finish evaluating
-    /// before the parent expression has evaluated
-    edge(pred, succ) :-
-        Expression(succ),
-        ancestor(succ, pred),
-        Expression(pred).
+    // TODO: What about the case where we have a function call in the unary??
 
-    /// Assignment - right hand side before left
-    edge(pred, succ) :-
-        Assignment(aid),
-        Assignment_leftHandSide(aid, succ),
-        Assignment_rightHandSide(aid, pred).
+    // ---- Binary Operation - lhs dominates everything else
+    dom_first(parent, first) :-
+        BinaryOperation_leftExpression(parent, lhs),
+        dom_first(lhs, first).
 
-    /// BinaryOperation - left to right order
-    edge(pred, succ) :-
-        BinaryOperation(boId),
-        BinaryOperation_leftExpression(boId, pred),
-        BinaryOperation_rightExpression(boId, succ).
+    dominate(prev, next) :-
+        BinaryOperation_leftExpression(binOp, prev),
+        BinaryOperation_rightExpression(binop, rhs),
+        dom_first(rhs, next).
 
-    /// Conditional - condition before branches
-    edge(pred, succ) :-
-        Conditional(cId),
-        Conditional_condition(cId, pred),
-        Conditional_trueExpression(cId, succ).
+    dominate(prev, next) :-
+        BinaryOperation_rightExpression(next, prev).
 
-    /// Conditional - condition before branches
-    edge(pred, succ) :-
-        Conditional(cId),
-        Conditional_condition(cId, pred),
-        Conditional_falseExpression(cId, succ).
+    // ---- Conditional
+    // Condition dominates everything else in the conditional
+    dom_first(parent, first) :-
+        Conditional_condition(parent, cond),
+        dom_first(cond, first).
 
+    // Condition dominates true branch
+    dominate(prev, next) :-
+        Conditional_condition(cond, prev),
+        Conditional_trueExpression(cond, trueE),
+        dom_first(trueE, next).
 
-    /// FunctionCall - arguments in left-to-right order
-    edge(pred, succ) :-
-        FunctionCall(fcId),
-        FunctionCall_arguments(fcId, pred, i),
-        FunctionCall_arguments(fcId, succ, i + 1).
+    // Condition dominates true branch
+    dominate(prev, next) :-
+        Conditional_condition(cond, prev),
+        Conditional_falseExpression(cond, falseE),
+        dom_first(falseE, next).
 
-    /// IndexAccess index before base
-    edge(pred, succ) :-
-        IndexAccess(iaId),
-        IndexAccess_baseExpression(aId, succ),
-        IndexAccess_indexExpression(iaId, pred, 1).
+    // Condition dominates the entire conditional
+    dominate(prev, next) :-
+        Conditional_condition(next, prev).
 
-    /// IndexRangeAccess - start before base
-    edge(pred, succ) :-
-        IndexRangeAccess(iraId), 
-        IndexRangeAccess_baseExpression(iraId, succ),
-        IndexRangeAccess_startExpression(iraId, pred, 1).
+    // ---- IndexAccess
+    // base is always evaluated first
+    dom_first(parent, first) :-
+        IndexAccess_baseExpression(parent, baseE),
+        IndexAccess_indexExpression(parent, _, 1),
+        dom_first(baseE, first).
 
-    /// IndexRangeAccess - end before base
-    edge(pred, succ) :-
-        IndexRangeAccess(iraId), 
-        IndexRangeAccess_baseExpression(iraId, succ),
-        IndexRangeAccess_endExpression(iraId, pred, 1).
+    // base dominates index
+    dominate(prev, next) :-
+        IndexAccess_baseExpression(parent, prev),
+        IndexAccess_indexExpression(parent, indexE, 1),
+        dom_first(indexE, next).
 
-    /// TupleExpression - left to right order
-    edge(pred, succ) :-
-        TupleExpression(tId),
-        TupleExpression_components(tId, pred, i, _),
-        TupleExpression_components(tId, succ, i + 1, _).
+    // index dominates the whole index expression
+    dominate(prev, next) :-
+        IndexAccess_indexExpression(next, prev, 1).
 
-    .decl dominate(pred: id, succ: id)
-    dominate(pred, succ) :- path(pred, succ, _).
+    // If no index expression this is just a typename - its a monolithic *thing*
+    dom_first(e, e) :-
+        IndexAccess_indexExpression(e, _, 0).
 
-    .decl dominateStmt(pred: id, succ: id)
-    dominateStmt(pred, succ) :- domStmt.path(pred, succ, _).
+    // ---- IndexRangeAccess
+    // Base is evaluated first
+    dom_first(parent, first) :-
+        IndexRangeAccess_baseExpression(parent, beId),
+        dom_first(beId, first).
+
+    // Case 1: Has start and end expressions - start is after base
+    dominate(prev, next) :-
+        IndexRangeAccess_baseExpression(parent, prev),
+        IndexRangeAccess_startExpression(parent, startE, 1),
+        dom_first(startE, next).
+
+    // end is after start
+    dominate(prev, next) :-
+        IndexRangeAccess_startExpression(parent, prev, 1),
+        IndexRangeAccess_endExpression(parent, endE, 1),
+        dom_first(endE, next).
+
+    // whole expression after end
+    dominate(prev, next) :-
+        IndexRangeAccess_endExpression(next, prev, 1).
+
+    // Case 2: Only start expression - whole expr after end
+    dominate(prev, next) :-
+        IndexRangeAccess_endExpression(next, _, 0),
+        IndexRangeAccess_startExpression(next, prev, 1).
+
+    // Case 3: Only end expression
+    dominate(prev, next) :-
+        IndexRangeAccess_baseExpression(parent, prev),
+        IndexRangeAccess_startExpression(parent, _, 0),
+        IndexRangeAccess_endExpression(parent, endE, 1),
+        dom_first(endE, next).
+
+    // Case 4: No start, no end expression
+    dominate(prev, next) :-
+        IndexRangeAccess_baseExpression(next, prev),
+        IndexRangeAccess_startExpression(next, _, 0),
+        IndexRangeAccess_endExpression(next, _, 0).
+
+    // ---- Assignment
+    // Right hand side evaluated first
+    dom_first(parent, first) :-
+        Assignment_rightHandSide(parent, rhsId),
+        dom_first(rhsId, first).
+
+    // RHS dominates LHS
+    dominate(prev, next) :-
+        Assignment_rightHandSide(parent, prev),
+        Assignment_leftHandSide(parent, rhsId),
+        dom_first(rhsId, next).
+
+    // LHS dominates the whole expression
+    edge(prev, next) :-
+        Assignment_leftHandSide(next, prev).
+
+    // ---- FunctionCallOptions
+    // For FunctionCallOptions we first evaluate base then options left to right
+    // Since solc-typed-ast doesn't preserve order we can't exactly enforce this. 
+    // As a hack just enforce the order gas, value, salt
+    dom_first(parent, first) :-
+        FunctionCallOptions_expression(parent, baseId),
+        dom_first(baseId, first).
+
+    // Gas is first
+    dominate(prev, next) :-
+        FunctionCallOptions_expression(parent, prev),
+        FunctionCallOptions_options(parent, "gas", optId),
+        dom_first(optId, next).
+
+    dominate(prev, next) :-
+        FunctionCallOptions_options(parent, "gas", prev),
+        FunctionCallOptions_options(parent, "value", valueId),
+        dom_first(valueId, next).
+
+    dominate(prev, next) :-
+        FunctionCallOptions_options(parent, "gas", prev),
+        !FunctionCallOptions_options(parent, "value", _),
+        FunctionCallOptions_options(parent, "salt", salt),
+        dom_first(salt, next).
+
+    dominate(prev, next) :-
+        FunctionCallOptions_options(next, "gas", prev),
+        !FunctionCallOptions_options(next, "value", _),
+        !FunctionCallOptions_options(next, "salt", _).
+
+    // Value is second
+    dominate(prev, next) :-
+        FunctionCallOptions_expression(parent, prev),
+        !FunctionCallOptions_options(parent, "gas", _),
+        FunctionCallOptions_options(parent, "value", value),
+        dom_first(value, next).
+
+    dominate(prev, next) :-
+        FunctionCallOptions_options(parent, "value", prev),
+        FunctionCallOptions_options(parent, "salt", salt),
+        dom_first(salt, next).
+
+    dominate(prev, next) :-
+        FunctionCallOptions_options(next, "value", prev),
+        !FunctionCallOptions_options(next, "salt", _).
+
+    // Salt is last
+    dominate(prev, next) :-
+        FunctionCallOptions_expression(parent, prev),
+        !FunctionCallOptions_options(parent, "gas", _),
+        !FunctionCallOptions_options(parent, "value", _),
+        FunctionCallOptions_options(parent, "salt", salt),
+        dom_first(salt, next).
+
+    dominate(prev, next) :-
+        FunctionCallOptions_options(next, "salt", prev).
+
+    // ---- FunctionCall
+    // For external calls base is evaluated first, then agruments.
+    // For internal calls its arguments than base
+    // Arguments are evaluated left-to-right
+
+    // Case 1: ExternalCall
+    // Callee first
+    dom_first(parent, first) :-
+        externalCall(parent),
+        FunctionCall_expression(parent, exprId),
+        dom_first(exprId, first).
+
+    // Then args (if any)
+    dominate(prev, next) :-
+        externalCall(parent),
+        FunctionCall_expression(parent, prev),
+        FunctionCall_arguments(parent, firstArgId, 0),
+        dom_first(firstArgId, next).
+
+    // if no args after base the whole call executes
+    dominate(prev, next) :-
+        externalCall(next),
+        FunctionCall_expression(next, prev),
+        (!FunctionCall_arguments(next, _, 0)).
+
+    // Ordering between args - left to right - same for internal and external
+    // calls
+    dominate(prev, next) :-
+        FunctionCall_arguments(parent, prev, i),
+        FunctionCall_arguments(parent, nextArg, i + 1),
+        dom_first(nextArg, next).
+
+    // After last arg whole call executes
+    dominate(prev, next) :-
+        externalCall(next),
+        FunctionCall_arguments(next, prev, i),
+        (!FunctionCall_arguments(next, _, i + 1)).
+
+    // Case 2: Internal call - first args then base
+    // Arguments are first
+    dom_first(parent, first) :-
+        internalCall(parent),
+        FunctionCall_arguments(parent, firstArgId, 0),
+        dom_first(firstArgId, first).
+
+    // If no args than base is first
+    dom_first(parent, first) :-
+        internalCall(parent),
+        !FunctionCall_arguments(parent, _, 0),
+        FunctionCall_expression(parent, baseId),
+        dom_first(baseId, first).
+
+    // After last argument is the base
+    dominate(prev, next) :-
+        internalCall(parent),
+        FunctionCall_arguments(parent, prev, i),
+        (!FunctionCall_arguments(parent, _, i + 1)),
+        FunctionCall_expression(parent, baseId),
+        dom_first(baseId, next).
+
+    // After the base is the whole call
+    dominate(prev, next) :-
+        internalCall(parent),
+        FunctionCall_expression(next, prev).
+
+    // ---- MemberAccess
+    dom_first(parent, first) :-
+        MemberAccess_expression(parent, baseId),
+        dom_first(baseId, first).
+
+    dominate(prev, next) :-
+        MemberAccess_expression(next, prev).
+
+    // NewExpression
+    dom_first(first, first) :-
+        NewExpression(first).
+
+    // Tuple expression
+    // Case 1: Non-empty tuple
+    dom_first(parent, first) :-
+        TupleExpression_components(parent, firstCompId, 0, _),
+        dom_first(firstCompId, first).
+
+    dominate(prev, next) :-
+        TupleExpression_components(teId, prev, i, _),
+        TupleExpression_components(teId, nextComp, i+1, _),
+        dom_first(nextComp, next).
+
+    dominate(prev, next) :-
+        TupleExpression_components(next, prev, i, _),
+        (!TupleExpression_components(next, _, i+1, _)).
+
+    // Case 2: Empty tuple
+    dom_first(parent, parent) :-
+        TupleExpression(parent),
+        !TupleExpression_components(parent, _, _, _).
+
+    // -------- Statements
+    // ---- Block
+    // For non-empty blocks the first statement is the dominating one
+    dom_first(parent, first) :-
+        (Block_statements(parent, firstStmt, 0);
+         UncheckedBlock_statements(parent, firstStmt, 0)
+        ),
+        dom_first(firstStmt, first).
+
+    // For empty blocks there are no sub-components
+    dom_first(parent, parent) :-
+        (Block(parent), !Block_statements(parent, _, _));
+        (UncheckedBlock(parent), !UncheckedBlock_statements(parent, _, _)).
+
+    // Previous blocks dominate the following blocks
+    dominate(prev, next) :-
+        Block_statements(parent, prev, i),
+        Block_statements(parent, nextStmt, i + 1),
+        dom_first(nextStmt, next).
+
+    dominate(prev, next) :-
+        UncheckedBlock_statements(parent, prev, i),
+        UncheckedBlock_statements(parent, nextStmt, i + 1),
+        dom_first(nextStmt, next).
+
+    // ---- While
+    // Condition always executes first
+    dom_first(parent, first) :-
+        WhileStatement_condition(parent, cond),
+        dom_first(cond, first).
+
+    // Condition dominates the body.
+    // Note body doesnt dominate condition as it may be executed 0 times
+    dominate(prev, next) :-
+        WhileStatement_condition(parent, prev),
+        WhileStatement_body(parent, body),
+        dom_first(body, next).
+
+    // Condition dominates the whole while
+    dominate(prev, next) :-
+        WhileStatement_condition(next, prev).
+
+    // ---- If
+    // Condition always evaluates first
+    dom_first(parent, next) :-
+        IfStatement_condition(parent, cond),
+        dom_first(cond, next).
+
+    // Condition dominates true body 
+    dominate(prev, next) :-
+        IfStatement_condition(parent, prev),
+        IfStatement_trueBody(parent, trueBody),
+        dom_first(trueBody, next).
+
+    // Condition dominates false body 
+    dominate(prev, next) :-
+        IfStatement_condition(parent, prev),
+        IfStatement_falseBody(parent, falseBody, 1),
+        dom_first(falseBody, next).
+
+    // Condition dominates the whole if
+    dominate(prev, next) :-
+        IfStatement_condition(next, prev).
+
+    // ---- DoWhile statement
+
+    // Body executes always at least once, so it's first
+    dom_first(parent, first) :-
+        DoWhileStatement_body(parent, body),
+        dom_first(body, first).
+
+    // -- Body and condition domination
+
+    // Case 1. No continue
+    // Body dominates the condition
+    // (Note that statements after breaks still dominate the condition)
+    dominate(prev, next) :-
+        DoWhileStatement_body(parent, prev),
+        !mayContinue(prev, parent),
+        DoWhileStatement_condition(parent, cond),
+        dom_first(cond, next).
+
+    // Case 2. Has continue
+    // Find a statement `S` in the body, that may continue, and no statement
+    // dominating it before in the body may continue. Use
+    // findLastDominatingNodeInBreakOrContinueStmt to find the node in S that
+    // dominates the condition.  (Note that statements after breaks still
+    // dominate the condition)
+    dominate(prev, next) :-
+        DoWhileStatement_body(parent, body),
+        firstMayContinueStmt(parent, S),
+        findLastDominatingNodeInContinueStmt(S, prev),
+        DoWhileStatement_condition(parent, cond),
+        dom_first(cond, next).
+
+    // -- Condition/Break Statement domination 
+
+    // Case 1. No break. Condition dominates the whole statement
+    // as its always executed after the last iteration
+    dominate(prev, next) :-
+        DoWhileStatement_body(next, body),
+        !mayBreak(body, next),
+        DoWhileStatement_condition(next, prev).
+
+    // Case 2. Has break. Find a statement `S` in the body, that may break, and
+    // has no statement `S1` in the body that dominates `S`, s.t. `S1` may
+    // break.  Use findLastDominatingNodeInBreakOrContinueStmt to find the node
+    // in S that dominates the whole DoWhileStatement.
+    dominate(prev, next) :-
+        DoWhileStatement_body(next, body),
+        firstMayBreakStmt(next, S),
+        findLastDominatingNodeInBreakStmt(S, prev).
+
+    // ---- ForStatement
+    dom_first(parent, first) :-
+        ForStatement_initializationExpression(parent, initE, 1),
+        dom_first(initE, first).
+
+    dom_first(parent, first) :-
+        !ForStatement_initializationExpression(parent, _, 1),
+        ForStatement_condition(parent, condE, 1),
+        dom_first(condE, first).
+
+    dom_first(parent, first) :-
+        !ForStatement_initializationExpression(parent, _, 1),
+        !ForStatement_condition(parent, _, 1),
+        ForStatement_body(parent, body),
+        dom_first(body, first).
+
+    // Initalization statement present - it dominates the condition.
+    // If condition is not present initialization dominates body and the whole
+    // for loop
+    dominate(prev, next) :-
+        ForStatement_initializationExpression(parent, prev, 1),
+        ForStatement_condition(parent, condE, 1),
+        dom_first(condE, next).
+
+    dominate(prev, next) :-
+        ForStatement_initializationExpression(parent, prev, 1),
+        !ForStatement_condition(parent, _, 1),
+        ForStatement_body(parent, body),
+        dom_first(body, next).
+
+    // Condition present - it dominates the body and for loop
+    dominate(prev, next) :-
+        ForStatement_condition(parent, prev, 1),
+        ForStatement_body(parent, body),
+        dom_first(body, next).
+
+    dominate(prev, next) :-
+        ForStatement_condition(next, prev, 1).
+
+    // Loop Expression present. Two cases - without continue - dominated by body. 
+    // With continue dominated by last node before continue in body
+    dominate(prev, next) :-
+        ForStatement_body(parent, prev),
+        !mayContinue(prev, parent),
+        ForStatement_loopExpression(parent, loopE, 1),
+        dom_first(loopE, next).
+
+    dominate(prev, next) :-
+        ForStatement_body(parent, body),
+        firstMayContinueStmt(parent, mayContS),
+        findLastDominatingNodeInContinueStmt(myContS, prev),
+        ForStatement_loopExpression(parent, loopE, 1),
+        dom_first(loopE, next).
+
+    // Finally if no condition, the last non-break statement of the body
+    // Dominates the for statement. In this case for turns into a do while (true)
+    dominate(prev, next) :-
+        ForStatement_body(next, body),
+        !ForStatement_condition(next, _, 1),
+        firstMayBreakStmt(next, mayBreakS),
+        findLastDominatingNodeInBreakStmt(myBreakS, prev).
+        
+    // ---- TryStatement
+    dom_first(parent, first) :-
+        TryStatement_externalCall(parent, extCall),
+        dom_first(extCall, first).
+
+    dominate(prev, next) :-
+        TryStatement_externalCall(parent, prev),
+        TryStatement_clauses(parent, clauseId, _),
+        TryCatchClause_block(clauseId, block),
+        dom_first(block, next).
+
+    // ---- ExpressionStatement
+    dom_first(parent, first) :-
+        ExpressionStatement_expression(parent, expr),
+        dom_first(expr, first).
+
+    dominate(prev, next) :-
+        ExpressionStatement_expression(next, prev).
+    
+    // ---- Break
+    dom_first(parent, parent) :-
+        Break(parent).
+
+    // ---- Continue
+    dom_first(parent, parent) :-
+        Continue(parent).
+
+    // ---- InlineAssembly
+    dom_first(parent, parent) :-
+        InlineAssembly(parent).
+
+    // ---- Return
+    // Two cases - with and without an expression
+    dom_first(parent, first) :-
+        Return_expression(parent, retE, 1),
+        dom_first(retE, first).
+
+    dominate(prev, next) :-
+        Return_expression(next, prev, 1).
+
+    dom_first(parent, parent) :-
+        Return(parent),
+        !Return_expression(parent, _, 1).
+
+    // ---- RevertStatement
+    dom_first(parent, first) :-
+        RevertStatement_errorCall(parent, errCall),
+        dom_first(errCall, first).
+
+    dominate(prev, next) :-
+        RevertStatement_errorCall(next, prev).
+
+    // ---- Throw
+    dom_first(n, n) :-
+        Throw(n).
+
+    // ---- VariableDeclarationStatement
+    dom_first(parent, first) :-
+        VariableDeclarationStatement_initialValue(parent, valE, 1),
+        dom_first(valE, first).
+
+    dom_first(parent, parent) :-
+        VariableDeclarationStatement(parent),
+        !VariableDeclarationStatement_initialValue(parent, _, 1).
+
+    dominate(prev, next) :-
+        VariableDeclarationStatement_initialValue(next, prev, 1).
+        
+    // ---- EmitStatement
+    dom_first(parent, first) :-
+        EmitStatement_eventCall(parent, eventCall),
+        dom_first(eventCall, first).
+
+    dominate(prev, next) :-
+        EmitStatement_eventCall(next, prev).
+
+    // ---- PlaceholderStatement??
 }

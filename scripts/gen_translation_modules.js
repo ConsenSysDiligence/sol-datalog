@@ -1117,8 +1117,8 @@ async function main() {
     console.log(`Collected ${classes.length} AST classes from solc-typed-ast`);
 
     const dlPath = "src/gen/ast.dl";
-    const factsPath = "src/gen/ast_facts.ts";
-    console.log(`Generating ${dlPath} amd ${factsPath}`);
+    const factsPath = "src/gen/ast_relations.ts";
+    console.log(`Generating ${dlPath} and ${factsPath}`);
     const [dlDecls, tsDecls, allRelnNames] = buildNodeDeclarations(classes);
 
     const dlContents = staticDlPreamble + "\n" + dlDecls.join("\n");
@@ -1140,7 +1140,7 @@ ${[...staticRelnNames, ...allRelnNames].join(", ")}
     const factBuilderFun = buildFactBuilderFun(classes);
     const translateContents = `
 import * as sol from "solc-typed-ast";
-import * as rln from "./ast_facts"
+import * as rln from "./ast_relations"
 import { sanitizeString, translateVal } from "../lib/utils";
 import { FactSet, Fact } from "souffle.ts"
 

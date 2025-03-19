@@ -1,5 +1,5 @@
 import * as sol from "solc-typed-ast";
-import * as rlns from "../gen/ast_facts";
+import * as rlns from "../gen/ast_relations";
 import { accumulateNodeFacts } from "../gen";
 import { CSVFactSet, Fact, FactSet } from "souffle.ts";
 

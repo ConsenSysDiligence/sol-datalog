@@ -3,6 +3,11 @@ coverage/
 dist/
 tmp/
 .env
+src/gen/translate.ts
+src/gen/ast_relations.ts
+src/gen/ast.dl
+src/gen/analyze
+src/gen/analyze.cpp
 src/lib/souffle/value_parser.ts
 src/lib/souffle/parser/souffle_parser_gen.js
 src/lib/souffle/parser/souffle_value_parser_gen.js

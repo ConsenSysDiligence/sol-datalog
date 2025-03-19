@@ -1,6 +1,5 @@
 import os from "os";
 import fse from "fs-extra";
-import * as sol from "solc-typed-ast";
 import { searchRecursive } from "../utils";
 import { ANALYSES_DIR, AVAILABLE_ANALYSES } from "../analyses";
 import { DETECTORS_DIR } from "../detectors";
@@ -9,8 +8,7 @@ import * as dl from "souffle.ts";
 import { join } from "path";
 import { spawnSync } from "child_process";
 import { FUNCTORS_DIR } from "../../functors";
-import { facts } from "../translate";
-import { INPUT_RELATIONS } from "../../gen/ast_facts";
+import { INPUT_RELATIONS } from "../../gen/ast_relations";
 
 export type OutputRelations = Map<string, dl.Fact[]>;
 
@@ -64,34 +62,17 @@ export function compileDatalog(): void {
     const dl = buildDatalog();
     fse.writeFileSync(inputFile, dl);
 
-    const result = spawnSync("souffle", [inputFile, `-L${FUNCTORS_DIR}`, "-o", COMPILED_BINARY], {
-        encoding: "utf-8"
-    });
+    const result = spawnSync(
+        "souffle",
+        [inputFile, "--wno=all", `-L${FUNCTORS_DIR}`, "-o", COMPILED_BINARY, "-p", "profile.txt"],
+        {
+            encoding: "utf-8"
+        }
+    );
 
     if (result.status !== 0) {
         throw new Error(
             `Souffle terminated with non-zero exit code (${result.status}): ${result.stderr}`
         );
     }
-}
-
-/**
- * Helper function to analyze a bunch of solc-typed-ast SourceUnits and output some of the relations
- */
-export async function analyze(
-    units: sol.SourceUnit[],
-    infer: sol.InferType,
-    mode: dl.SouffleOutputType,
-    outputRelations: dl.Relation[]
-): Promise<dl.FactSet> {
-    if (!fse.existsSync(COMPILED_BINARY)) {
-        compileDatalog();
-    }
-
-    const inputFS = facts(units, infer);
-    const outputFS = new dl.CSVFactSet(outputRelations);
-
-    await dl.runCompiled(inputFS, outputFS, COMPILED_BINARY, FUNCTORS_DIR);
-    inputFS.release();
-    return outputFS;
 }

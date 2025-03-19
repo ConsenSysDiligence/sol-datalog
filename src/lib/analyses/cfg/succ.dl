@@ -311,19 +311,6 @@
         Statement(id),
         !(Return(id) ; Break(id) ; Continue(id); RevertStatement(id); Throw(id)).
 
-    // True if nd is a loop statement.
-    .decl isLoop(node: id)
-    isLoop(id) :- (ForStatement(id) ; WhileStatement(id) ; DoWhileStatement(id)).
-
-    // Return the closest enclosing loop `loopId` to `node`
-    .decl enclosingLoop(node: id, loopId: id)
-    
-    enclosingLoop(id, id) :- isLoop(id).
-    enclosingLoop(id, loopId) :- 
-        parent(ptId, id),
-        (!isLoop(id)),
-        enclosingLoop(ptId, loopId).
-
     // ---------- Statement Relations -------------
     // ---- Block or UncheckedBlock
     // For non-empty blocks the first thing in the first statement is first

@@ -53,7 +53,3 @@ exprRefersTo(exprId, defId) :-
 exprRefersTo(exprId, defId) :-
     MemberAccess(exprId),
     MemberAccess_referencedDeclaration(exprId, defId).
-
-// True if nd is a checked or unchecked block
-.decl isBlock(nd: id) 
-isBlock(nd) :- (Block(nd) ; UncheckedBlock(nd)).
