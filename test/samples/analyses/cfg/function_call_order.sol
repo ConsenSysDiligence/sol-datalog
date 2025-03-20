@@ -20,36 +20,36 @@ contract Foo {
         return this.moo;
     }
 
-    function getZero() internal returns (uint) {
+    function getZero(uint dummy) internal returns (uint) {
         b.push(2);
         return 0;
     }
 
-    function getOne() internal returns (uint) {
+    function getOne(uint dummy) internal returns (uint) {
         b.push(5);
         return 1;
     }
 
 
     function main() public returns (uint[] memory){
-        getFun()(getZero());
+        getFun()(getZero(1));
         // Adds 2,1
         // so args then base
 
-        getFoo().moo(getZero());
+        getFoo().moo(getZero(2));
         // Adds 3,2
         // so base then args
 
-        getExtFun()(getZero());
+        getExtFun()(getZero(3));
         // Adds 4,2
         // so base then args
     
         // So for internal calls its args then base, and for external calls base then args
 
-        this.goo(getZero(), getOne());
+        this.goo(getZero(4), getOne(6));
         // Adds 2, 5 - so args in left to right order
 
-        getFoo().moo{value:getZero()}(getOne());
+        getFoo().moo{value:getZero(5)}(getOne(7));
         // Adds 3,2,5 - so getFoo(), then function calls options then agruments
         return b;
     }

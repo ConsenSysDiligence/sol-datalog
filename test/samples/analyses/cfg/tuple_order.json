@@ -1,0 +1,15 @@
+{
+    "cfg.dominate": {
+        "fmt": "{0}.source dominates {1}.source",
+        "data": [
+            "b.push(1) dominates return 0",
+            "b.push(2) dominates return 1",
+            "getZero() dominates getOne()",
+            "getZero() dominates (uint c, uint d) = (getZero(), getOne())",
+            "getZero() dominates return b",
+            "getOne() dominates (uint c, uint d) = (getZero(), getOne())",
+            "getOne() dominates return b",
+            "(uint c, uint d) = (getZero(), getOne()) dominates return b"
+        ]
+    }
+}

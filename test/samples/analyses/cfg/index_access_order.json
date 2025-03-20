@@ -1,0 +1,24 @@
+{
+    "cfg.dominate": {
+        "fmt": "{0}.source dominates {1}.source",
+        "data": [
+            "b.push(1) dominates return a",
+            "b.push(2) dominates return 1",
+            "a.push(1) dominates a.push(2)",
+            "a.push(1) dominates getA()",
+            "a.push(1) dominates getOne()",
+            "a.push(1) dominates getA()[getOne()] = 0",
+            "a.push(1) dominates return b",
+            "a.push(2) dominates getA()",
+            "a.push(2) dominates getOne()",
+            "a.push(2) dominates getA()[getOne()] = 0",
+            "a.push(2) dominates return b",
+            "getA() dominates getOne()",
+            "getA() dominates getA()[getOne()] = 0",
+            "getA() dominates return b",
+            "getOne() dominates getA()[getOne()] = 0",
+            "getOne() dominates return b",
+            "getA()[getOne()] = 0 dominates return b"
+        ]
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "cfg.dominate": {
+        "fmt": "{0}.source dominates {1}.source",
+        "data": [
+            "uint x = 1 dominates uint sum = 0",
+            "uint x = 1 dominates sum += x",
+            "uint x = 1 dominates x = x + 1",
+            "uint x = 1 dominates do {\\n            sum += x;\\n            x = x + 1;\\n        } while (x < 10);",
+            "uint x = 1 dominates return sum",
+            "uint sum = 0 dominates sum += x",
+            "uint sum = 0 dominates x = x + 1",
+            "uint sum = 0 dominates do {\\n            sum += x;\\n            x = x + 1;\\n        } while (x < 10);",
+            "uint sum = 0 dominates return sum",
+            "sum += x dominates x = x + 1",
+            "sum += x dominates do {\\n            sum += x;\\n            x = x + 1;\\n        } while (x < 10);",
+            "sum += x dominates return sum",
+            "x = x + 1 dominates do {\\n            sum += x;\\n            x = x + 1;\\n        } while (x < 10);",
+            "x = x + 1 dominates return sum",
+            "do {\\n            sum += x;\\n            x = x + 1;\\n        } while (x < 10); dominates return sum"
+        ]
+    }
+}
