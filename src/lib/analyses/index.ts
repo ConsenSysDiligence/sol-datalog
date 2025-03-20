@@ -61,35 +61,56 @@ export const AVAILABLE_ANALYSES: dl.Relation[] = [
     ]),
     new dl.Relation("access.writeExpr", [
         ["eId", ExpressionId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.writeStmt", [
         ["sId", StatementId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.writeModifier", [
         ["mId", ModifierDefinitionId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.writeFunction", [
         ["fId", FunctionDefinitionId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.readExpr", [
         ["eId", ExpressionId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.readStmt", [
         ["sId", StatementId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.readModifier", [
         ["mId", ModifierDefinitionId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.readFunction", [
         ["fId", FunctionDefinitionId],
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
+    ]),
+    new dl.Relation("access.readFunction", [
+        ["fId", FunctionDefinitionId],
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
+    ]),
+    new dl.Relation("hasParam", [
+        ["fId", FunctionDefinitionId],
         ["vId", VariableDeclarationId]
+    ]),
+    new dl.Relation("hasModifier", [
+        ["fId", FunctionDefinitionId],
+        ["vId", ModifierDefinitionId]
     ])
 ];
 

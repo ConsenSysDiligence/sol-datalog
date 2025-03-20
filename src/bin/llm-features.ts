@@ -291,9 +291,9 @@ async function main() {
         ["inh.inheritsStrict", "Contract {0}.name inherits from contract {1}.name"],
         ["hasParam", "Function {0}.name has parameter {1}.name"],
         ["hasModifier", "Function {0}.name has modifier {1}.name"],
-        ["access.readFunction", "Function {0}.name reads variable {1}.name"],
-        ["access.writeFunction", "Function {0}.name writes variable {1}.name"],
-        ["cg.edge", "Function {0}.name calls callable {1}.name"]
+        ["access.readFunction", "Function {0}.name reads variable {1}.name at location {2}"],
+        ["access.writeFunction", "Function {0}.name writes variable {1}.name at location {2}"],
+        ["cg.path", "Function {0}.name calls callable {1}.name via {2}"]
     ]);
 
     const outputAnalysesNames = [

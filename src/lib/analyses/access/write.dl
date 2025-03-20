@@ -2,191 +2,191 @@
     /// ============== EXPRESSIONS ============================
     /// Specifies whether the variable vId may be modified while evaluating the
     /// expression eId
-    .decl writeExpr(eId: ExpressionId, vId: VariableDeclarationId)
+    .decl writeExpr(eId: ExpressionId, vId: VariableDeclarationId, locId: id)
 
 
     /// ============== writeAssignmentLhs helper ============================
     /// Helper relation for whether a variable id is written on the LHS of an assignment
-    .decl writeAssignmentLhs(eId: ExpressionId, vId: VariableDeclarationId)
+    .decl writeAssignmentLhs(eId: ExpressionId, vId: VariableDeclarationId, locId: id)
 
     /// In `a[E] =...` stuff in a is written
-    writeAssignmentLhs(eId, vId) :-
-        IndexAccess_baseExpression(eId, baseId), writeAssignmentLhs(baseId, vId).
+    writeAssignmentLhs(eId, vId, locId) :-
+        IndexAccess_baseExpression(eId, baseId), writeAssignmentLhs(baseId, vId, locId).
 
     /// TODO: In `foo(args) = ...` we need alias analysis to figure out what was written
 
     /// In the special case `a.push() = ...` a is written
-    writeAssignmentLhs(eId, vId) :-
+    writeAssignmentLhs(eId, vId, locId) :-
         FunctionCall_expression(eId, calleeId),
         MemberAccess_memberName(calleeId, "push"),
         MemberAccess_referencedDeclaration(calleeId, -1),
         MemberAccess_expression(calleeId, baseId),
-        writeAssignmentLhs(baseId, vId).
+        writeAssignmentLhs(baseId, vId, locId).
 
     /// Recursive case for member access
-    writeAssignmentLhs(eId, vId) :-
-        MemberAccess_expression(eId, subExpressionId), writeAssignmentLhs(subExpressionId, vId).
+    writeAssignmentLhs(eId, vId, locId) :-
+        MemberAccess_expression(eId, subExpressionId), writeAssignmentLhs(subExpressionId, vId, locId).
 
     /// Recursive case for tuples
-    writeAssignmentLhs(eId, vId) :-
-        TupleExpression_components(eId, compId, _, _), writeAssignmentLhs(compId, vId).
+    writeAssignmentLhs(eId, vId, locId) :-
+        TupleExpression_components(eId, compId, _, _), writeAssignmentLhs(compId, vId, locId).
 
-    writeAssignmentLhs(eId, vId) :-
+    writeAssignmentLhs(eId, vId, eId) :-
         Identifier_referencedDeclaration(eId, vId), VariableDeclaration(vId).
 
-    writeAssignmentLhs(eId, vId) :-
+    writeAssignmentLhs(eId, vId, eId) :-
         MemberAccess_referencedDeclaration(eId, vId), VariableDeclaration(vId).
 
     /// ============== writeExpr ============================
 
-    writeExpr(eId, vId) :-
-        Assignment_rightHandSide(eId, rhsId), writeExpr(rhsId, vId).
+    writeExpr(eId, vId, locId) :-
+        Assignment_rightHandSide(eId, rhsId), writeExpr(rhsId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        Assignment_leftHandSide(eId, rhsId), writeAssignmentLhs(rhsId, vId).
+    writeExpr(eId, vId, locId) :-
+        Assignment_leftHandSide(eId, lhsId), writeAssignmentLhs(lhsId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        BinaryOperation_leftExpression(eId, lId), writeExpr(lId, vId).
+    writeExpr(eId, vId, locId) :-
+        BinaryOperation_leftExpression(eId, lId), writeExpr(lId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        BinaryOperation_rightExpression(eId, rId), writeExpr(rId, vId).
+    writeExpr(eId, vId, locId) :-
+        BinaryOperation_rightExpression(eId, rId), writeExpr(rId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        FunctionCall_expression(eId, calleeId), writeExpr(calleeId, vId).
+    writeExpr(eId, vId, locId) :-
+        FunctionCall_expression(eId, calleeId), writeExpr(calleeId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        FunctionCall_arguments(eId, argId, _), writeExpr(argId, vId).
+    writeExpr(eId, vId, locId) :-
+        FunctionCall_arguments(eId, argId, _), writeExpr(argId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        Conditional_condition(eId, cId), writeExpr(cId, vId).
+    writeExpr(eId, vId, locId) :-
+        Conditional_condition(eId, cId), writeExpr(cId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        Conditional_falseExpression(eId, fId), writeExpr(fId, vId).
+    writeExpr(eId, vId, locId) :-
+        Conditional_falseExpression(eId, fId), writeExpr(fId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        Conditional_trueExpression(eId, tId), writeExpr(tId, vId).
+    writeExpr(eId, vId, locId) :-
+        Conditional_trueExpression(eId, tId), writeExpr(tId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        FunctionCallOptions_expression(eId, subId), writeExpr(subId, vId).
+    writeExpr(eId, vId, locId) :-
+        FunctionCallOptions_expression(eId, subId), writeExpr(subId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        FunctionCallOptions_options(eId, _, optId), writeExpr(optId, vId).
+    writeExpr(eId, vId, locId) :-
+        FunctionCallOptions_options(eId, _, optId), writeExpr(optId, vId, locId).
 
-    writeExpr(eId, vId) :-
+    writeExpr(eId, vId, locId) :-
         UnaryOperation_subExpression(eId, subId),
-        UnaryOperation_operator(eId, operator), operator != "delete",
-        writeExpr(subId, vId).
+        UnaryOperation_operator(eId, operator),
+        writeExpr(subId, vId, locId).
 
-    writeExpr(eId, vId) :-
+    writeExpr(eId, vId, eId) :-
+        UnaryOperation_operator(eId, "delete"),
         UnaryOperation_subExpression(eId, subId),
-        UnaryOperation_operator(eId, operator), operator = "delete",
-        writeAssignmentLhs(subId, vId).
+        writeAssignmentLhs(subId, vId, _).
 
-    writeExpr(eId, vId) :-
-        UnaryOperation_operator(eId, "++"), UnaryOperation_subExpression(eId, subId), writeAssignmentLhs(subId, vId).
+    writeExpr(eId, vId, eId) :-
+        UnaryOperation_operator(eId, "++"), UnaryOperation_subExpression(eId, subId), writeAssignmentLhs(subId, vId, _).
 
-    writeExpr(eId, vId) :-
-        UnaryOperation_operator(eId, "--"), UnaryOperation_subExpression(eId, subId), writeAssignmentLhs(subId, vId).
+    writeExpr(eId, vId, eId) :-
+        UnaryOperation_operator(eId, "--"), UnaryOperation_subExpression(eId, subId), writeAssignmentLhs(subId, vId, _).
 
-    writeExpr(eId, vId) :-
-        IndexAccess_baseExpression(eId, bId), writeExpr(bId, vId).
+    writeExpr(eId, vId, locId) :-
+        IndexAccess_baseExpression(eId, bId), writeExpr(bId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        IndexAccess_indexExpression(eId, iId, 1), writeExpr(iId, vId).
+    writeExpr(eId, vId, locId) :-
+        IndexAccess_indexExpression(eId, iId, 1), writeExpr(iId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        MemberAccess_expression(eId, baseId), writeExpr(baseId, vId).
+    writeExpr(eId, vId, locId) :-
+        MemberAccess_expression(eId, baseId), writeExpr(baseId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        TupleExpression_components(eId, compId, _, _), writeExpr(compId, vId).
+    writeExpr(eId, vId, locId) :-
+        TupleExpression_components(eId, compId, _, _), writeExpr(compId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        IndexRangeAccess_baseExpression(eId, baseId), writeExpr(baseId, vId).
+    writeExpr(eId, vId, locId) :-
+        IndexRangeAccess_baseExpression(eId, baseId), writeExpr(baseId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        IndexRangeAccess_startExpression(eId, sId, 1), writeExpr(sId, vId).
+    writeExpr(eId, vId, locId) :-
+        IndexRangeAccess_startExpression(eId, sId, 1), writeExpr(sId, vId, locId).
 
-    writeExpr(eId, vId) :-
-        IndexRangeAccess_endExpression(eId, eId, 1), writeExpr(sId, vId).
+    writeExpr(eId, vId, locId) :-
+        IndexRangeAccess_endExpression(eId, eId, 1), writeExpr(sId, vId, locId).
 
     /// ============== STATEMENTS ============================
     /// Specifies whether the variable vId may be modified while evaluating the
     /// statement sId
-    .decl writeStmt(sId: StatementId, vId: VariableDeclarationId)
+    .decl writeStmt(sId: StatementId, vId: VariableDeclarationId, locId: id)
 
-    writeStmt(sId, vId) :-
-        ForStatement_initializationExpression(sId, subId, 1), writeExpr(subId, vId).
+    writeStmt(sId, vId, locId) :-
+        ForStatement_initializationExpression(sId, subId, 1), writeExpr(subId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        ForStatement_condition(sId, subId, 1), writeExpr(subId, vId).
+    writeStmt(sId, vId, locId) :-
+        ForStatement_condition(sId, subId, 1), writeExpr(subId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        ForStatement_loopExpression(sId, subId, 1), writeStmt(subId, vId).
+    writeStmt(sId, vId, locId) :-
+        ForStatement_loopExpression(sId, subId, 1), writeStmt(subId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        ForStatement_body(sId, bodyId), writeStmt(bodyId, vId).
+    writeStmt(sId, vId, locId) :-
+        ForStatement_body(sId, bodyId), writeStmt(bodyId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        TryStatement_externalCall(sId, callId), writeExpr(callId, vId).
+    writeStmt(sId, vId, locId) :-
+        TryStatement_externalCall(sId, callId), writeExpr(callId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        TryStatement_clauses(sId, clauseId, _), writeStmt(clauseId, vId).
+    writeStmt(sId, vId, locId) :-
+        TryStatement_clauses(sId, clauseId, _), writeStmt(clauseId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        EmitStatement_eventCall(sId, callId), writeExpr(callId, vId).
+    writeStmt(sId, vId, locId) :-
+        EmitStatement_eventCall(sId, callId), writeExpr(callId, vId, locId).
 
     /// TODO: Do inline assembly!!
-    writeStmt(sId, vId) :-
-        Block_statements(sId, subId, _), writeStmt(subId, vId).
+    writeStmt(sId, vId, locId) :-
+        Block_statements(sId, subId, _), writeStmt(subId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        RevertStatement_errorCall(sId, callId), writeExpr(callid, vId).
+    writeStmt(sId, vId, locId) :-
+        RevertStatement_errorCall(sId, callId), writeExpr(callid, vId, locId).
 
-    writeStmt(sId, vId) :-
-        UncheckedBlock_statements(sId, subId, _), writeStmt(subId, vId).
+    writeStmt(sId, vId, locId) :-
+        UncheckedBlock_statements(sId, subId, _), writeStmt(subId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        Return_expression(sId, exprId, 1), writeExpr(exprId, vId).
+    writeStmt(sId, vId, locId) :-
+        Return_expression(sId, exprId, 1), writeExpr(exprId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        WhileStatement_condition(sId, condId), writeExpr(condId, vId).
+    writeStmt(sId, vId, locId) :-
+        WhileStatement_condition(sId, condId), writeExpr(condId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        WhileStatement_body(sId, bodyId), writeStmt(bodyId, vId).
+    writeStmt(sId, vId, locId) :-
+        WhileStatement_body(sId, bodyId), writeStmt(bodyId, vId, locId).
 
-    writeStmt(sId, vId) :-
+    writeStmt(sId, vId, sId) :-
         VariableDeclarationStatement_assignments(sId, vId, _, _).
 
-    writeStmt(sId, vId) :-
-        IfStatement_condition(sId, cId), writeExpr(cId, vId).
+    writeStmt(sId, vId, locId) :-
+        IfStatement_condition(sId, cId), writeExpr(cId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        IfStatement_trueBody(sId, tId), writeStmt(tId, vId).
+    writeStmt(sId, vId, locId) :-
+        IfStatement_trueBody(sId, tId), writeStmt(tId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        IfStatement_falseBody(sId, fId, 1), writeStmt(fId, vId).
+    writeStmt(sId, vId, locId) :-
+        IfStatement_falseBody(sId, fId, 1), writeStmt(fId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        TryCatchClause_block(sId, bId), writeStmt(bId, vId).
+    writeStmt(sId, vId, locId) :-
+        TryCatchClause_block(sId, bId), writeStmt(bId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        DoWhileStatement_condition(sId, cId), writeExpr(cId, vId).
+    writeStmt(sId, vId, locId) :-
+        DoWhileStatement_condition(sId, cId), writeExpr(cId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        DoWhileStatement_body(sId, bId), writeStmt(bId, vId).
+    writeStmt(sId, vId, locId) :-
+        DoWhileStatement_body(sId, bId), writeStmt(bId, vId, locId).
 
-    writeStmt(sId, vId) :-
-        ExpressionStatement_expression(sId, eId), writeExpr(eId, vId).
+    writeStmt(sId, vId, locId) :-
+        ExpressionStatement_expression(sId, eId), writeExpr(eId, vId, locId).
 
     /// ============== Function/Modifiers ============================
-    .decl writeModifier(mId: ModifierDefinitionId, vId: VariableDeclarationId)
-    writeModifier(mId, vId) :-
-        ModifierDefinition_body(mId, bodyId, 1), writeStmt(bodyId, vId).
+    .decl writeModifier(mId: ModifierDefinitionId, vId: VariableDeclarationId, locId: id)
+    writeModifier(mId, vId, locId) :-
+        ModifierDefinition_body(mId, bodyId, 1), writeStmt(bodyId, vId, locId).
 
-    .decl writeFunction(fId: FunctionDefinitionId, vId: VariableDeclarationId)
-    writeFunction(fId, vId) :-
-        hasBody(fId, bodyId), writeStmt(bodyId, vId).
+    .decl writeFunction(fId: FunctionDefinitionId, vId: VariableDeclarationId, locId: id)
+    writeFunction(fId, vId, locId) :-
+        hasBody(fId, bodyId), writeStmt(bodyId, vId, locId).
         
-    writeFunction(fId, vId) :-
-        FunctionDefinition_modifiers(fId, mId, _), ModifierInvocation_arguments(mId, eId, _), writeExpr(eId, vId).
+    writeFunction(fId, vId, locId) :-
+        FunctionDefinition_modifiers(fId, mId, _), ModifierInvocation_arguments(mId, eId, _), writeExpr(eId, vId, locId).
 }

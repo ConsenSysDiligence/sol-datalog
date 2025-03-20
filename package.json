@@ -22,7 +22,7 @@
         "compile-program": "ts-node scripts/compile_program.ts",
         "copy-program": "cp src/gen/analyze dist/gen",
         "build": "npm run clean && npm run build-preamble && npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl && npm run build-functors && npm run copy-functors && npm run compile-program && npm run copy-program",
-        "quick-build": "npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl",
+        "quick-build": "npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js",
         "test": "c8 mocha",
         "lint": "eslint src/ test/ --ext=ts",
         "lint:fix": "eslint src/ test/ --ext=ts --fix",
