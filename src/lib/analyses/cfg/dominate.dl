@@ -1,5 +1,4 @@
 .comp Dominate : IdGraph {
-    .decl dominate(prev: id, next: id)
     /// Helper relation to identify the child of a compound statement/expression that dominates all of other children of the statement/expression (if any).
     .decl dom_first(parent: id, child: id)
 
@@ -13,7 +12,7 @@
         dom_first(subExpr, first).
 
     // Sub-expression dominates the whole expression
-    dominate(prev, next) :-
+    edge(prev, next) :-
         UnaryOperation_subExpression(next, prev).
 
     // TODO: What about the case where we have a function call in the unary??
@@ -23,12 +22,12 @@
         BinaryOperation_leftExpression(parent, lhs),
         dom_first(lhs, first).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         BinaryOperation_leftExpression(binOp, prev),
-        BinaryOperation_rightExpression(binop, rhs),
+        BinaryOperation_rightExpression(binOp, rhs),
         dom_first(rhs, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         BinaryOperation_rightExpression(next, prev).
 
     // ---- Conditional
@@ -38,19 +37,19 @@
         dom_first(cond, first).
 
     // Condition dominates true branch
-    dominate(prev, next) :-
+    edge(prev, next) :-
         Conditional_condition(cond, prev),
         Conditional_trueExpression(cond, trueE),
         dom_first(trueE, next).
 
     // Condition dominates true branch
-    dominate(prev, next) :-
+    edge(prev, next) :-
         Conditional_condition(cond, prev),
         Conditional_falseExpression(cond, falseE),
         dom_first(falseE, next).
 
     // Condition dominates the entire conditional
-    dominate(prev, next) :-
+    edge(prev, next) :-
         Conditional_condition(next, prev).
 
     // ---- IndexAccess
@@ -61,13 +60,13 @@
         dom_first(baseE, first).
 
     // base dominates index
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IndexAccess_baseExpression(parent, prev),
         IndexAccess_indexExpression(parent, indexE, 1),
         dom_first(indexE, next).
 
     // index dominates the whole index expression
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IndexAccess_indexExpression(next, prev, 1).
 
     // If no index expression this is just a typename - its a monolithic *thing*
@@ -81,35 +80,35 @@
         dom_first(beId, first).
 
     // Case 1: Has start and end expressions - start is after base
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IndexRangeAccess_baseExpression(parent, prev),
         IndexRangeAccess_startExpression(parent, startE, 1),
         dom_first(startE, next).
 
     // end is after start
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IndexRangeAccess_startExpression(parent, prev, 1),
         IndexRangeAccess_endExpression(parent, endE, 1),
         dom_first(endE, next).
 
     // whole expression after end
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IndexRangeAccess_endExpression(next, prev, 1).
 
     // Case 2: Only start expression - whole expr after end
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IndexRangeAccess_endExpression(next, _, 0),
         IndexRangeAccess_startExpression(next, prev, 1).
 
     // Case 3: Only end expression
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IndexRangeAccess_baseExpression(parent, prev),
         IndexRangeAccess_startExpression(parent, _, 0),
         IndexRangeAccess_endExpression(parent, endE, 1),
         dom_first(endE, next).
 
     // Case 4: No start, no end expression
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IndexRangeAccess_baseExpression(next, prev),
         IndexRangeAccess_startExpression(next, _, 0),
         IndexRangeAccess_endExpression(next, _, 0).
@@ -121,7 +120,7 @@
         dom_first(rhsId, first).
 
     // RHS dominates LHS
-    dominate(prev, next) :-
+    edge(prev, next) :-
         Assignment_rightHandSide(parent, prev),
         Assignment_leftHandSide(parent, rhsId),
         dom_first(rhsId, next).
@@ -139,52 +138,52 @@
         dom_first(baseId, first).
 
     // Gas is first
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCallOptions_expression(parent, prev),
         FunctionCallOptions_options(parent, "gas", optId),
         dom_first(optId, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCallOptions_options(parent, "gas", prev),
         FunctionCallOptions_options(parent, "value", valueId),
         dom_first(valueId, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCallOptions_options(parent, "gas", prev),
         !FunctionCallOptions_options(parent, "value", _),
         FunctionCallOptions_options(parent, "salt", salt),
         dom_first(salt, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCallOptions_options(next, "gas", prev),
         !FunctionCallOptions_options(next, "value", _),
         !FunctionCallOptions_options(next, "salt", _).
 
     // Value is second
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCallOptions_expression(parent, prev),
         !FunctionCallOptions_options(parent, "gas", _),
         FunctionCallOptions_options(parent, "value", value),
         dom_first(value, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCallOptions_options(parent, "value", prev),
         FunctionCallOptions_options(parent, "salt", salt),
         dom_first(salt, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCallOptions_options(next, "value", prev),
         !FunctionCallOptions_options(next, "salt", _).
 
     // Salt is last
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCallOptions_expression(parent, prev),
         !FunctionCallOptions_options(parent, "gas", _),
         !FunctionCallOptions_options(parent, "value", _),
         FunctionCallOptions_options(parent, "salt", salt),
         dom_first(salt, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCallOptions_options(next, "salt", prev).
 
     // ---- FunctionCall
@@ -200,27 +199,27 @@
         dom_first(exprId, first).
 
     // Then args (if any)
-    dominate(prev, next) :-
+    edge(prev, next) :-
         externalCall(parent),
         FunctionCall_expression(parent, prev),
         FunctionCall_arguments(parent, firstArgId, 0),
         dom_first(firstArgId, next).
 
     // if no args after base the whole call executes
-    dominate(prev, next) :-
+    edge(prev, next) :-
         externalCall(next),
         FunctionCall_expression(next, prev),
         (!FunctionCall_arguments(next, _, 0)).
 
     // Ordering between args - left to right - same for internal and external
     // calls
-    dominate(prev, next) :-
+    edge(prev, next) :-
         FunctionCall_arguments(parent, prev, i),
         FunctionCall_arguments(parent, nextArg, i + 1),
         dom_first(nextArg, next).
 
     // After last arg whole call executes
-    dominate(prev, next) :-
+    edge(prev, next) :-
         externalCall(next),
         FunctionCall_arguments(next, prev, i),
         (!FunctionCall_arguments(next, _, i + 1)).
@@ -240,7 +239,7 @@
         dom_first(baseId, first).
 
     // After last argument is the base
-    dominate(prev, next) :-
+    edge(prev, next) :-
         internalCall(parent),
         FunctionCall_arguments(parent, prev, i),
         (!FunctionCall_arguments(parent, _, i + 1)),
@@ -248,7 +247,7 @@
         dom_first(baseId, next).
 
     // After the base is the whole call
-    dominate(prev, next) :-
+    edge(prev, next) :-
         internalCall(parent),
         FunctionCall_expression(next, prev).
 
@@ -257,7 +256,7 @@
         MemberAccess_expression(parent, baseId),
         dom_first(baseId, first).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         MemberAccess_expression(next, prev).
 
     // NewExpression
@@ -270,12 +269,12 @@
         TupleExpression_components(parent, firstCompId, 0, _),
         dom_first(firstCompId, first).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         TupleExpression_components(teId, prev, i, _),
         TupleExpression_components(teId, nextComp, i+1, _),
         dom_first(nextComp, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         TupleExpression_components(next, prev, i, _),
         (!TupleExpression_components(next, _, i+1, _)).
 
@@ -286,6 +285,12 @@
 
     // -------- Statements
     // ---- Block
+    // Note that for blocks we ignore non-fallthrough behavior (return, break, continue). We still
+    // Assume those nodes dominate the following. According to the definition
+    // "a dominates b if all paths fom start to b go thorugh a", any node dominates non-reachable nodes,
+    // So its techincally correct to do this. Of course the relation may have some "noise" tuples in it
+    // related to dead code. We may later change this behavior.
+
     // For non-empty blocks the first statement is the dominating one
     dom_first(parent, first) :-
         (Block_statements(parent, firstStmt, 0);
@@ -299,15 +304,24 @@
         (UncheckedBlock(parent), !UncheckedBlock_statements(parent, _, _)).
 
     // Previous blocks dominate the following blocks
-    dominate(prev, next) :-
+    edge(prev, next) :-
         Block_statements(parent, prev, i),
         Block_statements(parent, nextStmt, i + 1),
         dom_first(nextStmt, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         UncheckedBlock_statements(parent, prev, i),
         UncheckedBlock_statements(parent, nextStmt, i + 1),
         dom_first(nextStmt, next).
+
+    // Last statement dominates the entire block
+    edge(prev, next) :-
+        Block_statements(next, prev, i),
+        !Block_statements(next, _, i + 1).
+
+    edge(prev, next) :-
+        UncheckedBlock_statements(next, prev, i),
+        !UncheckedBlock_statements(next, _, i + 1).
 
     // ---- While
     // Condition always executes first
@@ -317,13 +331,13 @@
 
     // Condition dominates the body.
     // Note body doesnt dominate condition as it may be executed 0 times
-    dominate(prev, next) :-
+    edge(prev, next) :-
         WhileStatement_condition(parent, prev),
         WhileStatement_body(parent, body),
         dom_first(body, next).
 
     // Condition dominates the whole while
-    dominate(prev, next) :-
+    edge(prev, next) :-
         WhileStatement_condition(next, prev).
 
     // ---- If
@@ -333,19 +347,19 @@
         dom_first(cond, next).
 
     // Condition dominates true body 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IfStatement_condition(parent, prev),
         IfStatement_trueBody(parent, trueBody),
         dom_first(trueBody, next).
 
     // Condition dominates false body 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IfStatement_condition(parent, prev),
         IfStatement_falseBody(parent, falseBody, 1),
         dom_first(falseBody, next).
 
     // Condition dominates the whole if
-    dominate(prev, next) :-
+    edge(prev, next) :-
         IfStatement_condition(next, prev).
 
     // ---- DoWhile statement
@@ -360,7 +374,7 @@
     // Case 1. No continue
     // Body dominates the condition
     // (Note that statements after breaks still dominate the condition)
-    dominate(prev, next) :-
+    edge(prev, next) :-
         DoWhileStatement_body(parent, prev),
         !mayContinue(prev, parent),
         DoWhileStatement_condition(parent, cond),
@@ -372,7 +386,7 @@
     // findLastDominatingNodeInBreakOrContinueStmt to find the node in S that
     // dominates the condition.  (Note that statements after breaks still
     // dominate the condition)
-    dominate(prev, next) :-
+    edge(prev, next) :-
         DoWhileStatement_body(parent, body),
         firstMayContinueStmt(parent, S),
         findLastDominatingNodeInContinueStmt(S, prev),
@@ -383,7 +397,7 @@
 
     // Case 1. No break. Condition dominates the whole statement
     // as its always executed after the last iteration
-    dominate(prev, next) :-
+    edge(prev, next) :-
         DoWhileStatement_body(next, body),
         !mayBreak(body, next),
         DoWhileStatement_condition(next, prev).
@@ -392,7 +406,7 @@
     // has no statement `S1` in the body that dominates `S`, s.t. `S1` may
     // break.  Use findLastDominatingNodeInBreakOrContinueStmt to find the node
     // in S that dominates the whole DoWhileStatement.
-    dominate(prev, next) :-
+    edge(prev, next) :-
         DoWhileStatement_body(next, body),
         firstMayBreakStmt(next, S),
         findLastDominatingNodeInBreakStmt(S, prev).
@@ -416,35 +430,35 @@
     // Initalization statement present - it dominates the condition.
     // If condition is not present initialization dominates body and the whole
     // for loop
-    dominate(prev, next) :-
+    edge(prev, next) :-
         ForStatement_initializationExpression(parent, prev, 1),
         ForStatement_condition(parent, condE, 1),
         dom_first(condE, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         ForStatement_initializationExpression(parent, prev, 1),
         !ForStatement_condition(parent, _, 1),
         ForStatement_body(parent, body),
         dom_first(body, next).
 
     // Condition present - it dominates the body and for loop
-    dominate(prev, next) :-
+    edge(prev, next) :-
         ForStatement_condition(parent, prev, 1),
         ForStatement_body(parent, body),
         dom_first(body, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         ForStatement_condition(next, prev, 1).
 
     // Loop Expression present. Two cases - without continue - dominated by body. 
     // With continue dominated by last node before continue in body
-    dominate(prev, next) :-
+    edge(prev, next) :-
         ForStatement_body(parent, prev),
         !mayContinue(prev, parent),
         ForStatement_loopExpression(parent, loopE, 1),
         dom_first(loopE, next).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         ForStatement_body(parent, body),
         firstMayContinueStmt(parent, mayContS),
         findLastDominatingNodeInContinueStmt(myContS, prev),
@@ -453,7 +467,7 @@
 
     // Finally if no condition, the last non-break statement of the body
     // Dominates the for statement. In this case for turns into a do while (true)
-    dominate(prev, next) :-
+    edge(prev, next) :-
         ForStatement_body(next, body),
         !ForStatement_condition(next, _, 1),
         firstMayBreakStmt(next, mayBreakS),
@@ -464,7 +478,7 @@
         TryStatement_externalCall(parent, extCall),
         dom_first(extCall, first).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         TryStatement_externalCall(parent, prev),
         TryStatement_clauses(parent, clauseId, _),
         TryCatchClause_block(clauseId, block),
@@ -475,7 +489,7 @@
         ExpressionStatement_expression(parent, expr),
         dom_first(expr, first).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         ExpressionStatement_expression(next, prev).
     
     // ---- Break
@@ -496,7 +510,7 @@
         Return_expression(parent, retE, 1),
         dom_first(retE, first).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         Return_expression(next, prev, 1).
 
     dom_first(parent, parent) :-
@@ -508,7 +522,7 @@
         RevertStatement_errorCall(parent, errCall),
         dom_first(errCall, first).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         RevertStatement_errorCall(next, prev).
 
     // ---- Throw
@@ -524,7 +538,7 @@
         VariableDeclarationStatement(parent),
         !VariableDeclarationStatement_initialValue(parent, _, 1).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         VariableDeclarationStatement_initialValue(next, prev, 1).
         
     // ---- EmitStatement
@@ -532,7 +546,7 @@
         EmitStatement_eventCall(parent, eventCall),
         dom_first(eventCall, first).
 
-    dominate(prev, next) :-
+    edge(prev, next) :-
         EmitStatement_eventCall(next, prev).
 
     // ---- PlaceholderStatement??

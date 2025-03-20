@@ -101,18 +101,14 @@ describe("Integration test on samples", () => {
             });
 
             it("Facts are sufficient for souffle binary to run", async () => {
-                // console.log(fileName);
-                // console.log(datalog);
+                const outputFS = new CSVFactSet([getRelation("cfg.dominate")]);
 
-                await inputFS.persist();
+                const p = (async () => {
+                    await runCompiled(inputFS, outputFS, COMPILED_BINARY, FUNCTORS_DIR);
+                    outputFS.release();
+                })();
 
-                const outputFS = new CSVFactSet([getRelation("cfg.dom.dominate")]);
-
-                expect(
-                    runCompiled(inputFS, outputFS, COMPILED_BINARY, FUNCTORS_DIR)
-                ).resolves.not.toThrow();
-
-                outputFS.release();
+                expect(p).resolves.not.toThrow();
             });
         });
     }

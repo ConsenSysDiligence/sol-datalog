@@ -1,20 +1,18 @@
 {
-    "cfg.dom.dominateStmt": {
-        "fmt": "{0} dominates {1}",
+    "cfg.dominate": {
+        "fmt": "{0}.source dominates {1}.source",
         "data": [
-            "VariableDeclarationStatement #9 dominates VariableDeclarationStatement #13",
-            "VariableDeclarationStatement #9 dominates ExpressionStatement #20",
-            "VariableDeclarationStatement #9 dominates ExpressionStatement #26",
-            "VariableDeclarationStatement #9 dominates Block #27",
-            "VariableDeclarationStatement #9 dominates WhileStatement #28",
-            "VariableDeclarationStatement #9 dominates Return #30",
-            "VariableDeclarationStatement #13 dominates ExpressionStatement #20",
-            "VariableDeclarationStatement #13 dominates ExpressionStatement #26",
-            "VariableDeclarationStatement #13 dominates Block #27",
-            "VariableDeclarationStatement #13 dominates WhileStatement #28",
-            "VariableDeclarationStatement #13 dominates Return #30",
-            "ExpressionStatement #20 dominates ExpressionStatement #26",
-            "WhileStatement #28 dominates Return #30"
+            "uint x = 1 dominates uint sum = 0",
+            "uint x = 1 dominates sum += x",
+            "uint x = 1 dominates x = x + 1",
+            "uint x = 1 dominates while (x < 10) {\\n            sum += x;\\n            x = x + 1;\\n        }",
+            "uint x = 1 dominates return sum",
+            "uint sum = 0 dominates sum += x",
+            "uint sum = 0 dominates x = x + 1",
+            "uint sum = 0 dominates while (x < 10) {\\n            sum += x;\\n            x = x + 1;\\n        }",
+            "uint sum = 0 dominates return sum",
+            "sum += x dominates x = x + 1",
+            "while (x < 10) {\\n            sum += x;\\n            x = x + 1;\\n        } dominates return sum"
         ]
     }
 }

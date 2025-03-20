@@ -17,6 +17,6 @@ export async function analyze(
     const outputFS = new dl.CSVFactSet(outputRelations);
 
     await dl.runCompiled(inputFS, outputFS, COMPILED_BINARY, FUNCTORS_DIR);
-    inputFS.release();
+    //inputFS.release();
     return outputFS;
 }

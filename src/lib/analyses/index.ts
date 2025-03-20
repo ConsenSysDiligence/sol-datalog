@@ -38,13 +38,15 @@ export const AVAILABLE_ANALYSES: dl.Relation[] = [
     ]),
     new dl.Relation("cfg.domStmt.path", [
         ["pred", IdT],
-        ["succ", IdT]
-    ]),
-    new dl.Relation("cfg.dom.dominate", [
-        ["pred", IdT],
-        ["succ", IdT]
+        ["succ", IdT],
+        ["path", NumPathT]
     ]),
     new dl.Relation("cfg.dom.path", [
+        ["pred", IdT],
+        ["succ", IdT],
+        ["path", NumPathT]
+    ]),
+    new dl.Relation("cfg.dominate", [
         ["pred", IdT],
         ["succ", IdT],
         ["path", NumPathT]

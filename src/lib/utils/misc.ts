@@ -75,7 +75,7 @@ export function sanitizeString(s: string): string {
 
 export function translateVal(a: any): string {
     if (typeof a === "string") {
-        return `"${a}"`;
+        return a;
     }
 
     if (typeof a === "boolean") {

@@ -1,22 +1,17 @@
 {
-    "cfg.dom.dominateStmt": {
+    "cfg.dominate": {
         "fmt": "{0}.source dominates {1}.source",
         "data": [
             "uint x = 1 dominates uint sum = 0",
-            "uint x = 1 dominates x < 10",
             "uint x = 1 dominates x++",
             "uint x = 1 dominates sum += x",
-            "uint x = 1 dominates {\\n            sum += x;\\n        }",
             "uint x = 1 dominates for (; x < 10; x++) {\\n            sum += x;\\n        }",
             "uint x = 1 dominates return sum",
-            "uint sum = 0 dominates x < 10",
             "uint sum = 0 dominates x++",
             "uint sum = 0 dominates sum += x",
-            "uint sum = 0 dominates {\\n            sum += x;\\n        }",
             "uint sum = 0 dominates for (; x < 10; x++) {\\n            sum += x;\\n        }",
             "uint sum = 0 dominates return sum",
-            "x < 10 dominates return sum",
-            "{\\n            sum += x;\\n        } dominates x++",
+            "sum += x dominates x++",
             "for (; x < 10; x++) {\\n            sum += x;\\n        } dominates return sum"
         ]
     }

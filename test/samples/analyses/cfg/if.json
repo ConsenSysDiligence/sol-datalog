@@ -1,14 +1,25 @@
 {
-    "cfg.dom.dominateStmt": {
-        "fmt": "{0} dominates {1}",
+    "cfg.dominate": {
+        "fmt": "{0}.source dominates {1}.source",
         "data": [
-            "VariableDeclarationStatement #7 dominates ExpressionStatement #13",
-            "VariableDeclarationStatement #7 dominates Block #14",
-            "VariableDeclarationStatement #7 dominates ExpressionStatement #17",
-            "VariableDeclarationStatement #7 dominates Block #18",
-            "VariableDeclarationStatement #7 dominates IfStatement #19",
-            "VariableDeclarationStatement #7 dominates VariableDeclarationStatement #23",
-            "IfStatement #19 dominates VariableDeclarationStatement #23"
+            "uint x = 0 dominates x++",
+            "uint x = 0 dominates x = 5",
+            "uint x = 0 dominates x = 6",
+            "uint x = 0 dominates if (x++ > 1) {\\n            x = 5;\\n        } else {\\n            x = 6;\\n        }",
+            "uint x = 0 dominates x = 7",
+            "x++ dominates x = 5",
+            "x++ dominates x = 6",
+            "x++ dominates if (x++ > 1) {\\n            x = 5;\\n        } else {\\n            x = 6;\\n        }",
+            "x++ dominates x = 7",
+            "if (x++ > 1) {\\n            x = 5;\\n        } else {\\n            x = 6;\\n        } dominates x = 7",
+            "uint y = 0 dominates y++",
+            "uint y = 0 dominates y = 5",
+            "uint y = 0 dominates if (y++ > 1) {\\n            y = 5;\\n        }",
+            "uint y = 0 dominates y = 7",
+            "y++ dominates y = 5",
+            "y++ dominates if (y++ > 1) {\\n            y = 5;\\n        }",
+            "y++ dominates y = 7",
+            "if (y++ > 1) {\\n            y = 5;\\n        } dominates y = 7"
         ]
     }
 }

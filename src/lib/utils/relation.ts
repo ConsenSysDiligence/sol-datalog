@@ -1,5 +1,6 @@
-import { assert, ASTContext, ASTNode, ASTNodeConstructor, pp } from "solc-typed-ast";
+import { assert, ASTContext, ASTNode, ASTNodeConstructor } from "solc-typed-ast";
 import * as DL from "souffle.ts";
+import { pp } from "./pp";
 
 export type RelationFieldT = ASTNodeConstructor<ASTNode> | string;
 export type RelationField = ASTNode | string | number | boolean | ASTNode[];

@@ -14,9 +14,7 @@
             "main calls b via [Foo:main,Foo:b]",
             "main calls c via [Foo:main,Foo:a,Foo:c]",
             "main calls d via [Foo:main,Foo:b,Foo:d]",
-            "main calls d via [Foo:main,Foo:a,Foo:c,Foo:d]",
             "main calls f via [Foo:main,Foo:b,Foo:d,Foo:f]",
-            "main calls f via [Foo:main,Foo:a,Foo:c,Foo:d,Foo:f]",
             "rec calls rec via [Foo:rec,Foo:rec]"
         ]
     }

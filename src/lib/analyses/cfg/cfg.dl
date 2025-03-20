@@ -2,4 +2,27 @@
     .init domStmt = DominateStmt
     .init dom = Dominate
     .init succ = Successor
+
+    // Helper relation to filter out intersting nodes for id
+    .decl isInterestingForDominate(id: id)
+
+    // Expression is the top-level expression under an ExpressionStatement
+    .decl exprIsUnderExprStmt(e: id)
+    exprIsUnderExprStmt(e) :-
+        parent(p, e), ExpressionStatement(p).
+
+    // For now pick all Statements, Assignments, Function calls, mutating unary ops
+    // Skip top-level expressions right under an ExpressionStatement as those are basically identicall.
+    isInterestingForDominate(id) :-
+        (Statement(id), !isBlock(id));
+        (Assignment(id), !exprIsUnderExprStmt(id));
+        (FunctionCall(id), !exprIsUnderExprStmt(id));
+        ((UnaryOperation_operator(id, "++"); UnaryOperation_operator(id, "--")), !exprIsUnderExprStmt(id)).
+
+    // A filtered dominate relation useful for testing
+    .decl dominate(prev: id, next: id, path: NumPath)
+    dominate(prev, next, path) :-
+        dom.path(prev, next, path),
+        isInterestingForDominate(prev),
+        isInterestingForDominate(next).
 }

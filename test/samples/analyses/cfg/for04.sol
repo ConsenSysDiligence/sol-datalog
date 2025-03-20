@@ -9,9 +9,11 @@ contract Foo {
             sum += x;
             x++;
 
-            if (x >= 10) {
+            if (x-- >= 10) {
                 break;
             } 
+
+            x++;
         }
 
         return sum;
