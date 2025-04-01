@@ -1,0 +1,50 @@
+{
+    "access.readFunction": {
+        "fmt": "Function {0}.name reads variable {1}.name at location {2}.parent.source",
+        "data": [
+            "Function id reads variable t at location return t",
+            "Function main reads variable s at location s += x",
+            "Function main reads variable arr2D at location arr2D.push",
+            "Function main reads variable arr2D at location arr2D.push",
+            "Function main reads variable x at location s += x",
+            "Function main reads variable t at location Moo(t)",
+            "Function main reads variable v at location v++",
+            "Function main reads variable i at location i++",
+            "Function main reads variable i at location i < (u=12)",
+            "Function main reads variable i at location i += (u= 13)"
+        ]
+    },
+    "access.writesFunction": {
+        "fmt": "Function {0}.name writes variable {1}.name at location {2}.source",
+        "data": [
+            "Function main writes variable s at location s += x",
+            "Function main writes variable arr2D at location arr2D.push()",
+            "Function main writes variable arr2D at location arr2D.push() = [uint(1),2,3]",
+            "Function main writes variable arr2D at location arr2D.push()",
+            "Function main writes variable arr2D at location arr2D.push().push()",
+            "Function main writes variable arr2D at location arr2D.push().push() = 10",
+            "Function main writes variable t at location t = 4",
+            "Function main writes variable t at location t = 5",
+            "Function main writes variable t at location t = 6",
+            "Function main writes variable u at location uint u",
+            "Function main writes variable u at location u = (v = 1) + (w = 2)",
+            "Function main writes variable u at location u=12",
+            "Function main writes variable u at location u= 13",
+            "Function main writes variable v at location uint v",
+            "Function main writes variable v at location v = 1",
+            "Function main writes variable v at location v++",
+            "Function main writes variable w at location uint w",
+            "Function main writes variable w at location w = 2",
+            "Function main writes variable w at location w = 14",
+            "Function main writes variable a at location int a",
+            "Function main writes variable a at location a = 3",
+            "Function main writes variable a at location a = -(a = 3)",
+            "Function main writes variable a at location a = 9",
+            "Function main writes variable a at location a = 8",
+            "Function main writes variable i at location uint i = 0",
+            "Function main writes variable i at location i++",
+            "Function main writes variable i at location uint i = 11",
+            "Function main writes variable i at location i += (u= 13)"
+        ]
+    }
+}
