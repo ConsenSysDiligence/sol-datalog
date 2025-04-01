@@ -7,7 +7,6 @@ import { GEN_DIR } from "../../gen";
 import * as dl from "souffle.ts";
 import { join } from "path";
 import { spawnSync } from "child_process";
-import { FUNCTORS_DIR } from "../../functors";
 import { INPUT_RELATIONS } from "../../gen/ast_relations";
 
 export type OutputRelations = Map<string, dl.Fact[]>;
@@ -62,13 +61,9 @@ export function compileDatalog(): void {
     const dl = buildDatalog();
     fse.writeFileSync(inputFile, dl);
 
-    const result = spawnSync(
-        "souffle",
-        [inputFile, "--wno=all", `-L${FUNCTORS_DIR}`, "-o", COMPILED_BINARY, "-p", "profile.txt"],
-        {
-            encoding: "utf-8"
-        }
-    );
+    const result = spawnSync("souffle", [inputFile, "--wno=all", "-o", COMPILED_BINARY], {
+        encoding: "utf-8"
+    });
 
     if (result.status !== 0) {
         throw new Error(

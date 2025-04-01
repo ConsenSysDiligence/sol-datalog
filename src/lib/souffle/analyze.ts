@@ -1,6 +1,5 @@
 import * as sol from "solc-typed-ast";
 import * as dl from "souffle.ts";
-import { FUNCTORS_DIR } from "../../functors";
 import { facts } from "../translate";
 import { COMPILED_BINARY } from "./compile";
 
@@ -16,7 +15,7 @@ export async function analyze(
     const inputFS = facts(units, infer);
     const outputFS = new dl.CSVFactSet(outputRelations);
 
-    await dl.runCompiled(inputFS, outputFS, COMPILED_BINARY, FUNCTORS_DIR);
+    await dl.runCompiled(inputFS, outputFS, COMPILED_BINARY);
     inputFS.release();
     return outputFS;
 }
