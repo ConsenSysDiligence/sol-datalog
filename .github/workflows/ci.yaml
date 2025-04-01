@@ -45,7 +45,7 @@ jobs:
             # See https://github.com/souffle-lang/souffle/releases
             - name: Install Soufflé
               run: |
-                  sudo apt update && sudo apt install -y libffi7 mcpp build-essential
+                  sudo apt update && sudo apt install -y libffi8 mcpp build-essential
                   wget $SOUFFLE_DEB -O /tmp/souffle.deb
                   sudo dpkg -i /tmp/souffle.deb
                   souffle --version
