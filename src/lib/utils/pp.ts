@@ -1,3 +1,5 @@
+import * as sol from "solc-typed-ast";
+
 export interface PPAble {
     pp(): string;
 }
@@ -11,9 +13,11 @@ export type PPIsh =
     | null
     | undefined
     | PPIsh[]
+    | { [key: string]: PPIsh }
     | Set<PPIsh>
     | Map<PPIsh, PPIsh>
-    | Iterable<PPIsh>;
+    | Iterable<PPIsh>
+    | sol.ASTNode;
 
 export function isPPAble(value: any): value is PPAble {
     return value ? typeof value.pp === "function" : false;
@@ -48,6 +52,23 @@ export function pp(value: PPIsh): string {
 
     if (value instanceof Map) {
         return ppMap(value);
+    }
+
+    if (value instanceof sol.ASTNode) {
+        if (value instanceof sol.FunctionDefinition) {
+            return `${value.vScope instanceof sol.ContractDefinition ? value.vScope.name + ":" : ""}${value.name}`;
+        }
+        return sol.pp(value);
+    }
+
+    if (typeof value === "object") {
+        const res: string[] = [];
+
+        for (const [key, val] of Object.entries(value)) {
+            res.push(`${key}: ${pp(val)}`);
+        }
+
+        return `{${res.join(", ")}}`;
     }
 
     if (typeof value[Symbol.iterator] === "function") {

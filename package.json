@@ -14,14 +14,13 @@
     "scripts": {
         "clean": "rm -rf dist/ && rm -rf src/gen/declarations.ts src/gen/translate.ts souffle_parser_gen.js souffle_value_parser_gen.js",
         "transpile": "tsc",
-        "gen-translation-modules": "node scripts/gen_translation_modules.js && eslint --fix src/gen/translate.ts src/gen/declarations.ts",
-        "copy-dl": "cp -r src/lib/analyses dist/lib && cp -r src/lib/detectors dist/lib",
-        "copy-functors": "cp -r src/functors dist/",
-        "build-functors": "./scripts/build_functors.sh",
+        "gen-translation-modules": "node scripts/gen_translation_modules.js && eslint --fix src/gen/translate.ts src/gen/ast_relations.ts",
+        "copy-dl": "cp -r src/lib/analyses dist/lib && cp -r src/lib/detectors dist/lib && cp src/gen/ast.dl dist/gen",
         "build-preamble": "npm run gen-translation-modules",
-        "build-full": "npm run clean && npm run build-preamble && npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl && npm run build-functors && npm run copy-functors",
-        "build": "npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl",
-        "quick-build": "npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl",
+        "compile-program": "ts-node scripts/compile_program.ts",
+        "copy-program": "cp src/gen/analyze dist/gen",
+        "build": "npm run clean && npm run build-preamble && npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js && npm run copy-dl && npm run compile-program && npm run copy-program",
+        "quick-build": "npm run transpile && chmod a+x dist/bin/cli.js dist/bin/llm-features.js",
         "test": "c8 mocha",
         "lint": "eslint src/ test/ --ext=ts",
         "lint:fix": "eslint src/ test/ --ext=ts --fix",
@@ -34,9 +33,9 @@
         "dotenv": "^16.4.5",
         "fs-extra": "^11.2.0",
         "solc-typed-ast": "^18.2.4",
+        "souffle.ts": "^0.3.1",
         "sqlite": "^5.1.1",
-        "sqlite3": "^5.1.7",
-        "souffle.ts": "0.2.2"
+        "sqlite3": "^5.1.7"
     },
     "devDependencies": {
         "@ts-ast-parser/core": "^0.7.0",
@@ -51,11 +50,11 @@
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-prettier": "^5.1.3",
         "expect": "^29.7.0",
+        "jison": "^0.4.18",
         "mocha": "^10.3.0",
         "prettier": "3.2.5",
         "ts-node": "^10.9.2",
-        "typescript": "^5.3.3",
-        "jison": "^0.4.18"
+        "typescript": "^5.3.3"
     },
     "repository": {
         "type": "git",

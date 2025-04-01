@@ -2,7 +2,7 @@ import expect from "expect";
 import fse from "fs-extra";
 import * as sol from "solc-typed-ast";
 import { analyze, getRelation } from "../src";
-import { Fact, searchRecursive } from "../src/lib/utils";
+import { Fact, makeFileMap, searchRecursive } from "../src/lib/utils";
 import * as dl from "souffle.ts";
 
 const samples = searchRecursive("test/samples/analyses", (fileName) => fileName.endsWith(".json"));
@@ -65,12 +65,7 @@ describe("Analyses", () => {
                     encoding: "utf-8"
                 }) as AnalysesTest;
 
-                fileMap = new Map();
-
-                for (const unit of units) {
-                    const unitSource = fse.readFileSync(unit.absolutePath);
-                    fileMap.set(unit.sourceListIndex, unitSource);
-                }
+                fileMap = makeFileMap(units);
             });
 
             it("Analyses expected results", async () => {

@@ -77,7 +77,7 @@ const astFiles = [
 
 let modules;
 
-const staticPreamble = `
+const staticDlPreamble = `
 .type id <: number
 .type bool <: number
 .type ExpressionId <: id
@@ -139,6 +139,108 @@ const staticPreamble = `
 .decl VariableDeclaration_signature(varId: VariableDeclarationId, signature: symbol)
 .decl VariableDeclaration_signatureHash(varId: VariableDeclarationId, signature: symbol)
 `;
+
+const staticTSPrefix = `
+    /* eslint camelcase: 0 */
+    import { NumberT as number, SymbolT as symbol, Relation, SubT } from "souffle.ts";
+
+    export const id = new SubT("id", number);
+    export const bool = new SubT("bool", number);
+    export const ExpressionId = new SubT("ExpressionId", id);
+    export const StatementId = new SubT("StatementId", id);
+    export const TypeNameId = new SubT("TypeNameId", id);
+
+    export const ContractKind = new SubT("ContractKind", symbol);
+    export const LiteralKind = new SubT("LiteralKind", symbol);
+    export const TimeUnit = new SubT("TimeUnit", symbol);
+    export const EtherUnit = new SubT("EtherUnit", symbol);
+    export const FunctionCallKind = new SubT("FunctionCallKind", symbol);
+    export const DataLocation = new SubT("DataLocation", symbol);
+    export const Mutability = new SubT("Mutability", symbol);
+    export const FunctionStateMutability = new SubT("FunctionStateMutability", symbol);
+    export const FunctionKind = new SubT("FunctionKind", symbol);
+    export const ModifierInvocationKind = new SubT("ModifierInvocationKind", symbol);
+    export const StateVariableVisibility = new SubT("StateVariableVisibility", symbol);
+    export const FunctionVisibility = new SubT("FunctionVisibility", symbol);
+    export const ElementaryTypeNameMutability = new SubT("ElementaryTypeNameMutability", symbol);
+    export const SubdenominationT = new SubT("SubdenominationT", symbol);
+`;
+
+const staticTSSuffix = `
+    export const parent = new Relation("parent", [["parentId", id], ["childId", id]]);
+    export const src = new Relation("src", [["id", id], ["src", symbol]]);
+    export const Node = new Relation("Node", [["id", id]]);
+    export const externalCall = new Relation("externalCall", [["id", FunctionCallId]]);
+    export const ConstantExpression = new Relation("ConstantExpression", [["id", id]]);
+    export const CompilerVersion = new Relation("CompilerVersion", [["major", number], ["minor", number], ["patch", number]]);
+    export const Expression = new Relation("Expression", [["id", id]]);
+    export const Statement = new Relation("Statement", [["id", id]]);
+    export const StatementWithChildren = new Relation("StatementWithChildren", [["id", id]]);
+    export const PrimaryExpression = new Relation("PrimaryExpression", [["id", id]]);
+    export const TypeName = new Relation("TypeName", [["id", id]]);
+    export const ContractDefinition_linearizedBaseContracts = new Relation("ContractDefinition_linearizedBaseContracts", [["parentId", ContractDefinitionId], ["childId", ContractDefinitionId], ["idx", number]]);
+    export const ContractDefinition_usedErrors = new Relation("ContractDefinition_usedErrors", [["parentId", ContractDefinitionId], ["childId", ErrorDefinitionId], ["idx", number]]);
+    export const ContractDefinition_usedEvents = new Relation("ContractDefinition_usedEvents", [["parentId", ContractDefinitionId], ["childId", EventDefinitionId], ["idx", number]]);
+    export const TupleExpression_components = new Relation("TupleExpression_components", [["parentId", TupleExpressionId], ["childId", ExpressionId], ["idx", number], ["realIdx", number]]);
+    export const FunctionDefinition_modifiers = new Relation("FunctionDefinition_modifiers", [["parentId", FunctionDefinitionId], ["childId", ModifierInvocationId], ["idx", number]]);
+    export const FunctionCall_arguments = new Relation("FunctionCall_arguments", [["parentId", FunctionCallId], ["childId", ExpressionId], ["idx", number]]);
+    export const TryStatement_clauses = new Relation("TryStatement_clauses", [["parentId", TryStatementId], ["childId", TryCatchClauseId], ["idx", number]]);
+    export const VariableDeclarationStatement_declarations = new Relation("VariableDeclarationStatement_declarations", [["parentId", VariableDeclarationStatementId], ["childId", VariableDeclarationId], ["idx", number]]);
+    export const InheritanceSpecifier_arguments = new Relation("InheritanceSpecifier_arguments", [["parentId", InheritanceSpecifierId], ["childId", ExpressionId], ["idx", number]]);
+    export const ModifierInvocation_arguments = new Relation("ModifierInvocation_arguments", [["parentId", ModifierInvocationId], ["childId", ExpressionId], ["idx", number]]);
+    export const ParameterList_parameters = new Relation("ParameterList_parameters", [["parentId", ParameterListId], ["childId", VariableDeclarationId], ["idx", number]]);
+    export const Block_statements = new Relation("Block_statements", [["parentId", BlockId], ["childId", StatementId], ["idx", number]]);
+    export const UncheckedBlock_statements = new Relation("UncheckedBlock_statements", [["parentId", UncheckedBlockId], ["childId", StatementId], ["idx", number]]);
+    export const UsingForDirective_functionList = new Relation("UsingForDirective_functionList", [["parentId", UsingForDirectiveId], ["childId", IdentifierPathId], ["operator", symbol], ["idx", number]]);
+    export const StructDefinition_members = new Relation("StructDefinition_members", [["parentId", StructDefinitionId], ["childId", VariableDeclarationId], ["idx", number]]);
+    export const EnumDefinition_members = new Relation("EnumDefinition_members", [["parentId", EnumDefinitionId], ["childId", EnumValueId], ["idx", number]]);
+    export const VariableDeclarationStatement_assignments = new Relation("VariableDeclarationStatement_assignments", [["parentId", VariableDeclarationStatementId], ["childId", VariableDeclarationId], ["idx", number], ["realIdx", number]]);
+    export const OverrideSpecifier_overrides = new Relation("OverrideSpecifier_overrides", [["parentId", OverrideSpecifierId], ["childId", id], ["idx", number]]);
+
+    export const FunctionCall_fieldNames = new Relation("FunctionCall_fieldNames", [["parentId", FunctionCallId], ["name", symbol], ["idx", number]]);
+    export const PragmaDirective_literals = new Relation("PragmaDirective_literals", [["parentId", FunctionCallId], ["literal", symbol], ["idx", number]]);
+    export const SourceUnit_exportedSymbols = new Relation("SourceUnit_exportedSymbols", [["parentId", SourceUnitId], ["name", symbol], ["id", id]]);
+    export const FunctionCallOptions_options = new Relation("FunctionCallOptions_options", [["parentId", FunctionCallOptionsId], ["name", symbol], ["id", id]]);
+    export const FunctionDefinition_signature = new Relation("FunctionDefinition_signature", [["funId", FunctionDefinitionId], ["signature", symbol]]);
+    export const FunctionDefinition_signatureHash = new Relation("FunctionDefinition_signatureHash", [["funId", FunctionDefinitionId], ["signature", symbol]]);
+    export const VariableDeclaration_signature = new Relation("VariableDeclaration_signature", [["varId", VariableDeclarationId], ["signature", symbol]]);
+    export const VariableDeclaration_signatureHash = new Relation("VariableDeclaration_signatureHash", [["varId", VariableDeclarationId], ["signature", symbol]]);
+`;
+
+const staticRelnNames = [
+    "parent",
+    "src",
+    "externalCall",
+    "ConstantExpression",
+    "CompilerVersion",
+    "TypeName",
+    "ContractDefinition_linearizedBaseContracts",
+    "ContractDefinition_usedErrors",
+    "ContractDefinition_usedEvents",
+    "TupleExpression_components",
+    "FunctionDefinition_modifiers",
+    "FunctionCall_arguments",
+    "TryStatement_clauses",
+    "VariableDeclarationStatement_declarations",
+    "InheritanceSpecifier_arguments",
+    "ModifierInvocation_arguments",
+    "ParameterList_parameters",
+    "Block_statements",
+    "UncheckedBlock_statements",
+    "UsingForDirective_functionList",
+    "StructDefinition_members",
+    "EnumDefinition_members",
+    "VariableDeclarationStatement_assignments",
+    "OverrideSpecifier_overrides",
+    "FunctionCall_fieldNames",
+    "PragmaDirective_literals",
+    "SourceUnit_exportedSymbols",
+    "FunctionCallOptions_options",
+    "FunctionDefinition_signature",
+    "FunctionDefinition_signatureHash",
+    "VariableDeclaration_signature",
+    "VariableDeclaration_signatureHash"
+];
 
 const skipFields = ["raw", "documentation", "nameLocation", "children", "src"];
 const skipClassFieldsM = new Map([
@@ -274,7 +376,10 @@ function buildNodeDecls(name, constructor, baseName) {
 
     assert(idBaseType !== undefined, `No base id type for base ${baseName}`);
 
-    const res = [`.type ${name}Id <: ${idBaseType}`];
+    const dlRes = [`.type ${name}Id <: ${idBaseType}`];
+    const tsTypeRes = [`export const ${name}Id = new SubT("${name}Id", ${idBaseType});`];
+    const tsRelnRes = [];
+    const relnNames = [];
 
     for (let [paramName, optional, type] of params.slice(2)) {
         if (shouldSkipField(name, paramName)) {
@@ -343,26 +448,41 @@ function buildNodeDecls(name, constructor, baseName) {
         }
 
         if (optional) {
-            res.push(`.decl ${name}_${paramName}(id: ${name}Id, val: ${datalogT}, present: bool)`);
+            const relnName = `${name}_${paramName}`;
+            dlRes.push(`.decl ${relnName}(id: ${name}Id, val: ${datalogT}, present: bool)`);
+            tsRelnRes.push(
+                `export const ${relnName} = new Relation("${relnName}", [["id", ${name}Id], ["val", ${datalogT}], ["present", bool]]);`
+            );
+            relnNames.push(relnName);
         } else {
-            res.push(`.decl ${name}_${paramName}(id: ${name}Id, val: ${datalogT})`);
+            const relnName = `${name}_${paramName}`;
+            dlRes.push(`.decl ${relnName}(id: ${name}Id, val: ${datalogT})`);
+            tsRelnRes.push(
+                `export const ${relnName} = new Relation("${relnName}", [["id", ${name}Id], ["val", ${datalogT}]]);`
+            );
+            relnNames.push(relnName);
         }
     }
 
     if (idBaseType !== "id") {
-        res.push(`${idBaseType.slice(0, -2)}(id) :- ${name}(id).`);
+        dlRes.push(`${idBaseType.slice(0, -2)}(id) :- ${name}(id).`);
     }
 
     // Note that this is a node type
-    res.push(`Node(id) :- ${name}(id).`);
+    dlRes.push(`Node(id) :- ${name}(id).`);
     // Add the decl itself
-    res.push(`.decl ${name}(id: ${name}Id)`);
+    dlRes.push(`.decl ${name}(id: ${name}Id)`);
+    tsRelnRes.push(`export const ${name} = new Relation("${name}", [["id", ${name}Id]]);`);
+    relnNames.push(name);
 
-    return res;
+    return [dlRes, tsTypeRes, tsRelnRes, relnNames];
 }
 
 function buildNodeDeclarations(classDescs) {
-    const res = [];
+    const dlRes = [],
+        tsTypeRes = [],
+        tsRelnRes = [],
+        allRelns = [];
 
     for (const [name, classDecl, constructor] of classDescs) {
         const bases = classDecl.getHeritage().filter((n) => astClassNames.has(n.getName()));
@@ -371,10 +491,19 @@ function buildNodeDeclarations(classDescs) {
             throw new Error(`Not a single base for ${name}`);
         }
 
-        res.push(...buildNodeDecls(name, constructor, bases[0].getName()));
+        const [dlDecls, tsTypeDecls, tsRelnDecls, rlnNames] = buildNodeDecls(
+            name,
+            constructor,
+            bases[0].getName()
+        );
+
+        dlRes.push(...dlDecls);
+        tsTypeRes.push(...tsTypeDecls);
+        tsRelnRes.push(...tsRelnDecls);
+        allRelns.push(...rlnNames);
     }
 
-    return res;
+    return [dlRes, [...tsTypeRes, ...tsRelnRes], allRelns];
 }
 
 function getDefaultValue(name, paramName, type) {
@@ -717,18 +846,20 @@ function buildFactInvocation(className, constructor, baseName) {
 
     // Add anchor and src relations
     let res = `
-        res.push(\`${className}(\${nd.id}).\`);
-        res.push(\`src(\${nd.id}, "\${nd.src}").\`);
+        fs.addFacts(
+            new Fact(rln.${className}, [nd.id]),
+            new Fact(rln.src, [nd.id, nd.src])
+        );
 `;
 
     // Add relations for map arguments
     for (let [paramName, optional] of params.slice(2)) {
-        const args = [`\${nd.id}`];
+        const args = [`nd.id`, "k"];
 
         if (className === "SourceUnit" && paramName === "exportedSymbols") {
-            args.push("${'\"' + k + '\"'}", `\${v}`);
+            args.push("v");
         } else if (className === "FunctionCallOptions" && paramName === `options`) {
-            args.push("${'\"' + k + '\"'}", `\${v.id}`);
+            args.push("v.id");
         } else {
             continue;
         }
@@ -739,7 +870,7 @@ function buildFactInvocation(className, constructor, baseName) {
 
         res += `
     for (let [k, v] of nd.${canonicalParamName}.entries()) {
-        res.push(\`${className}_${paramName}(${args.join(", ")}).\`);
+        fs.addFacts(new Fact(rln.${className}_${paramName}, [${args.join(", ")}]));
     }
 `;
     }
@@ -764,7 +895,7 @@ function buildFactInvocation(className, constructor, baseName) {
             continue;
         }
 
-        res.push(\`${className}_${paramName}(\${nd.id}, \${t}, \${i}, \${realI}).\`);
+        fs.addFacts(new Fact(rln.${className}_${paramName}, [nd.id, t, i, realI]));
         i++;
     }
 `;
@@ -790,27 +921,27 @@ function buildFactInvocation(className, constructor, baseName) {
             continue;
         }
 
-        const args = [`\${nd.id}`];
+        const args = [`nd.id`];
 
         if (type === `number[]`) {
-            args.push(`\${t}`);
+            args.push(`t`);
         } else if (type === `string[]`) {
-            args.push(`\${'"' + t + '"'}`);
+            args.push(`t`);
         } else if (
             (className === "TupleExpression" && canonicalParamName === "components") ||
             (className === "VariableDeclarationStatement" && canonicalParamName === "assignments")
         ) {
-            args.push(`\${t === null ? -1 : t}`);
+            args.push(`t === null ? -1 : t`);
         } else if (className === "UsingForDirective" && canonicalParamName === "vFunctionList") {
-            args.push(`\${t instanceof sol.ASTNode ? t.id : t.definition.id}`);
-            args.push(`\${t instanceof sol.ASTNode ? '""' : \`"\${t.operator}"\`}`);
+            args.push(`t instanceof sol.ASTNode ? t.id : t.definition.id`);
+            args.push(`t instanceof sol.ASTNode ? "" : t.operator`);
         } else if (className === "FunctionCall" && canonicalParamName === "fieldNames") {
-            args.push(`\${'"' + t + '"'}`);
+            args.push(`t`);
         } else {
-            args.push(`\${t.id}`);
+            args.push(`t.id`);
         }
 
-        args.push(`\${i}`);
+        args.push(`i`);
 
         if (
             (className === "FunctionCall" ||
@@ -824,7 +955,7 @@ function buildFactInvocation(className, constructor, baseName) {
         let expr = `
     for (let i = 0; i < nd.${canonicalParamName}.length; i++) {
         let t = nd.${canonicalParamName}[i];
-        res.push(\`${className}_${paramName}(${args.join(", ")}).\`);
+        fs.addFacts(new Fact(rln.${className}_${paramName}, [${args.join(", ")}]));
     }
 `;
         if (optional) {
@@ -871,37 +1002,41 @@ function buildFactInvocation(className, constructor, baseName) {
         }
 
         if (optional) {
-            res += `res.push(\`${className}_${paramName}(\${nd.id}, \${translateVal(${dynamicArg})}, \${translateVal(nd.${canonicalParamName} !== undefined)}).\`);`;
+            res += `fs.addFacts(new Fact(rln.${className}_${paramName}, [nd.id, translateVal(${dynamicArg}), translateVal(nd.${canonicalParamName} !== undefined)]));\n`;
         } else {
-            res += `res.push(\`${className}_${paramName}(\${nd.id}, \${translateVal(${dynamicArg})}).\`);`;
+            res += `fs.addFacts(new Fact(rln.${className}_${paramName}, [nd.id, translateVal(${dynamicArg})]));\n`;
         }
     }
 
     if (className === "FunctionCall") {
         res += `if (infer.isFunctionCallExternal(nd)) {
-            res.push(\`externalCall(\${nd.id}).\`);
+            fs.addFacts(new Fact(rln.externalCall, [nd.id]));
         }
 `;
     }
 
     if (baseName === "Expression" || baseName === "PrimaryExpression") {
         res += `if (sol.isConstant(nd)) {
-            res.push(\`ConstantExpression(\${nd.id}).\`);
+            fs.addFacts(new Fact(rln.ConstantExpression, [nd.id]));
         }
 `;
     }
 
     if (className === "FunctionDefinition") {
         res += `
-            res.push(\`FunctionDefinition_signature(\${nd.id}, "\${infer.signature(nd)}").\`);
-            res.push(\`FunctionDefinition_signatureHash(\${nd.id}, "\${infer.signatureHash(nd)}").\`);
+            fs.addFacts(
+                new Fact(rln.FunctionDefinition_signature, [nd.id, infer.signature(nd)]),
+                new Fact(rln.FunctionDefinition_signatureHash, [nd.id, infer.signatureHash(nd)])
+            );
 `;
     }
 
     if (className === "VariableDeclaration") {
         res += `if (nd.stateVariable && nd.visibility === sol.StateVariableVisibility.Public) {
-            res.push(\`VariableDeclaration_signature(\${nd.id}, "\${infer.signature(nd)}").\`);
-            res.push(\`VariableDeclaration_signatureHash(\${nd.id}, "\${infer.signatureHash(nd)}").\`);
+            fs.addFacts(
+                new Fact(rln.VariableDeclaration_signature, [nd.id, infer.signature(nd)]),
+                new Fact(rln.VariableDeclaration_signatureHash, [nd.id, infer.signatureHash(nd)])
+            )
         }
 `;
     }
@@ -930,18 +1065,14 @@ function buildFactBuilderFun(classDescs) {
     body += ` else {\n    throw new Error(\`Unknown AST node type \${nd.constructor.name}.\`);\n}`;
 
     return `
-export function translateASTNodeInternal(nd: sol.ASTNode, infer: sol.InferType): string[] {
-    let res: string[] = [];
+export function accumulateNodeFacts(nd: sol.ASTNode, infer: sol.InferType, fs: FactSet): void {
     ${body}
-    return res;
 }
 `;
 }
 
 async function main() {
     const parser = await import("@ts-ast-parser/core");
-
-    let res = [staticPreamble];
 
     const { project } = await parser.parseFromFiles(astFiles);
 
@@ -985,18 +1116,33 @@ async function main() {
 
     console.log(`Collected ${classes.length} AST classes from solc-typed-ast`);
 
-    const genPath = "src/gen/declarations.ts";
-    console.log(`Generating ${genPath}`);
-    res.push(...buildNodeDeclarations(classes));
-    const declsContents = `export const preamble = \`${res.join("\n")}\`;\n`;
-    fse.writeFileSync(genPath, declsContents, { encoding: "utf-8" });
+    const dlPath = "src/gen/ast.dl";
+    const factsPath = "src/gen/ast_relations.ts";
+    console.log(`Generating ${dlPath} and ${factsPath}`);
+    const [dlDecls, tsDecls, allRelnNames] = buildNodeDeclarations(classes);
+
+    const dlContents = staticDlPreamble + "\n" + dlDecls.join("\n");
+    fse.writeFileSync(dlPath, dlContents, { encoding: "utf-8" });
+
+    const astContents = `
+${staticTSPrefix}
+${tsDecls.join("\n")}
+${staticTSSuffix}
+
+export const INPUT_RELATIONS: Relation[] = [
+${[...staticRelnNames, ...allRelnNames].join(", ")}
+];
+`;
+    fse.writeFileSync(factsPath, astContents, { encoding: "utf-8" });
 
     const translatePath = "src/gen/translate.ts";
     console.log(`Generating ${translatePath}`);
     const factBuilderFun = buildFactBuilderFun(classes);
     const translateContents = `
 import * as sol from "solc-typed-ast";
+import * as rln from "./ast_relations"
 import { sanitizeString, translateVal } from "../lib/utils";
+import { FactSet, Fact } from "souffle.ts"
 
 ${factBuilderFun}
 `;

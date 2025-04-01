@@ -1,17 +1,37 @@
 import * as dl from "souffle.ts";
+import {
+    ContractDefinitionId,
+    ExpressionId,
+    FunctionCallId,
+    FunctionDefinitionId,
+    ModifierDefinitionId,
+    StatementId,
+    VariableDeclarationId
+} from "../../gen/ast_relations";
 
 export const ANALYSES_DIR = __dirname;
 
 export const IdT = new dl.SubT("id", dl.NumberT);
-export const ContractDefinitionId = new dl.SubT("ContractDefinitionId", IdT);
-export const ExpressionId = new dl.SubT("ExpressionId", IdT);
-export const VariableDeclarationId = new dl.SubT("VariableDeclarationId", IdT);
-export const StatementId = new dl.SubT("StatementId", IdT);
-export const ModifierDefinitionId = new dl.SubT("ModifierDefinitionId", IdT);
-export const FunctionDefinitionId = new dl.SubT("FunctionDefinitionId", IdT);
 
 const NumPathT = new dl.RecordT("NumPath", [["head", dl.NumberT]]);
-// Note NumPathT is recursive
+const LocT = new dl.ADTT("Loc", [
+    ["Var", [["id", VariableDeclarationId]]],
+    [
+        "Member",
+        [
+            ["base", null as any],
+            ["field", dl.SymbolT]
+        ]
+    ],
+    ["Index", [["base", null as any]]],
+    ["FunCall", [["call", FunctionCallId]]]
+]);
+
+// Fixup recursive type references
+LocT.branches[1][1][0][1] = LocT;
+LocT.branches[2][1][0][1] = LocT;
+//LocT.branches[3][1][0][1] = LocT;
+
 NumPathT.fields.push(["tail", NumPathT]);
 
 export const AVAILABLE_ANALYSES: dl.Relation[] = [
@@ -36,13 +56,20 @@ export const AVAILABLE_ANALYSES: dl.Relation[] = [
         ["childNode", IdT],
         ["baseFun", IdT]
     ]),
-    new dl.Relation("cfg.dom.dominateStmt", [
+    new dl.Relation("cfg.domStmt.path", [
         ["pred", IdT],
-        ["succ", IdT]
+        ["succ", IdT],
+        ["path", NumPathT]
     ]),
-    new dl.Relation("cfg.dom.dominate", [
+    new dl.Relation("cfg.dom.path", [
         ["pred", IdT],
-        ["succ", IdT]
+        ["succ", IdT],
+        ["path", NumPathT]
+    ]),
+    new dl.Relation("cfg.dominate", [
+        ["pred", IdT],
+        ["succ", IdT],
+        ["path", NumPathT]
     ]),
     new dl.Relation("cfg.succ.succ", [
         ["prev", IdT],
@@ -52,37 +79,53 @@ export const AVAILABLE_ANALYSES: dl.Relation[] = [
         ["prev", IdT],
         ["next", IdT]
     ]),
-    new dl.Relation("access.writeExpr", [
-        ["eId", ExpressionId],
-        ["vId", VariableDeclarationId]
+    new dl.Relation("access.writes", [
+        ["id", IdT],
+        ["loc", LocT]
     ]),
-    new dl.Relation("access.writeStmt", [
-        ["sId", StatementId],
-        ["vId", VariableDeclarationId]
+    new dl.Relation("access.writesVar", [
+        ["id", IdT],
+        ["varId", VariableDeclarationId],
+        ["loc", LocT]
     ]),
-    new dl.Relation("access.writeModifier", [
-        ["mId", ModifierDefinitionId],
-        ["vId", VariableDeclarationId]
-    ]),
-    new dl.Relation("access.writeFunction", [
+    new dl.Relation("access.writesFunction", [
         ["fId", FunctionDefinitionId],
-        ["vId", VariableDeclarationId]
+        ["varId", VariableDeclarationId],
+        ["nod", IdT],
+        ["loc", LocT]
     ]),
     new dl.Relation("access.readExpr", [
         ["eId", ExpressionId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.readStmt", [
         ["sId", StatementId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.readModifier", [
         ["mId", ModifierDefinitionId],
-        ["vId", VariableDeclarationId]
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
     ]),
     new dl.Relation("access.readFunction", [
         ["fId", FunctionDefinitionId],
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
+    ]),
+    new dl.Relation("access.readFunction", [
+        ["fId", FunctionDefinitionId],
+        ["vId", VariableDeclarationId],
+        ["locId", IdT]
+    ]),
+    new dl.Relation("hasParam", [
+        ["fId", FunctionDefinitionId],
         ["vId", VariableDeclarationId]
+    ]),
+    new dl.Relation("hasModifier", [
+        ["fId", FunctionDefinitionId],
+        ["vId", ModifierDefinitionId]
     ])
 ];
 

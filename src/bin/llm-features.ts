@@ -20,15 +20,8 @@ import {
     downloadSupportedCompilers,
     isExact
 } from "solc-typed-ast";
-import {
-    analyze,
-    FunctionDefinitionId,
-    getRelation,
-    ModifierDefinitionId,
-    VariableDeclarationId
-} from "../lib";
-import { Fact } from "../lib/utils";
-import { Relation } from "souffle.ts";
+import { analyze, getRelation } from "../lib";
+import { Fact, makeFileMap } from "../lib/utils";
 
 const pkg = require("../../package.json");
 
@@ -286,34 +279,27 @@ async function main() {
     const reader = new ASTReader();
     const units = reader.read(result.data);
     const infer = new InferType(result.compilerVersion as string);
+    const fileMap = makeFileMap(units);
 
     const templates = new Map<string, string>([
         ["inh.inheritsStrict", "Contract {0}.name inherits from contract {1}.name"],
+        [
+            "access.readFunction",
+            "Function {0}.name reads variable {1}.name at location {2}.parent.source"
+        ],
+        [
+            "access.writesFunction",
+            "Function {0}.name writes variable {1}.name at location {2}.source"
+        ],
+        ["cg.path", "Function {0}.name calls callable {1}.name via {2}"],
         ["hasParam", "Function {0}.name has parameter {1}.name"],
         ["hasModifier", "Function {0}.name has modifier {1}.name"],
-        ["access.readFunction", "Function {0}.name reads variable {1}.name"],
-        ["access.writeFunction", "Function {0}.name writes variable {1}.name"],
-        ["cg.edge", "Function {0}.name calls callable {1}.name"]
+        ["access.writes", "Node {0}.source writes loc {1}"]
     ]);
 
-    const outputAnalysesNames = [
-        "inh.inheritsStrict",
-        "access.readFunction",
-        "access.writeFunction",
-        "cg.edge"
-    ];
+    const outputAnalysesNames = [...templates.keys()];
 
     const outputAnalyses = outputAnalysesNames.map(getRelation);
-    outputAnalyses.push(
-        new Relation("hasParam", [
-            ["fId", FunctionDefinitionId],
-            ["vId", VariableDeclarationId]
-        ]),
-        new Relation("hasModifier", [
-            ["fId", FunctionDefinitionId],
-            ["vId", ModifierDefinitionId]
-        ])
-    );
 
     const res = await analyze(units, infer, "csv", outputAnalyses);
     const output = await res.allFacts();
@@ -328,7 +314,7 @@ async function main() {
 
         for (const fact of facts) {
             const f = new Fact(fact, reader.context);
-            console.log(f.fmt(templates.get(relation.name) as string));
+            console.log(f.fmt(templates.get(relation.name) as string, fileMap));
         }
     }
     return;

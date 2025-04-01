@@ -75,7 +75,7 @@ export function sanitizeString(s: string): string {
 
 export function translateVal(a: any): string {
     if (typeof a === "string") {
-        return `"${a}"`;
+        return a;
     }
 
     if (typeof a === "boolean") {
@@ -119,4 +119,15 @@ export function searchRecursive(targetPath: string, filter: (entry: string) => b
     }
 
     return results;
+}
+
+export function makeFileMap(units: sol.SourceUnit[]): Map<number, Uint8Array> {
+    const fileMap = new Map();
+
+    for (const unit of units) {
+        const unitSource = fse.readFileSync(unit.absolutePath);
+        fileMap.set(unit.sourceListIndex, unitSource);
+    }
+
+    return fileMap;
 }

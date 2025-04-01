@@ -156,7 +156,7 @@ function getReachability(g: NdGraph, start: number): Reachable {
 
 export function dumpFacts(fs: dl.Fact[]): void {
     for (const f of fs) {
-        console.error(f.toJSON());
+        console.error(f.pp());
     }
 }
 

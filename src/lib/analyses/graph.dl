@@ -17,7 +17,8 @@
         edge(from, x),
         path(x, to, p).
 
-    path(x, y, p1) <= path(x, y, p2) :- @isSubsequence(as(p2, NumPath), as(p1, NumPath)) = 1.
+    // Pick any path
+    path(x, y, p1) <= path(x, y, p2) :- true.
 }
 
 .comp IdGraph : NumGraph<id> { }

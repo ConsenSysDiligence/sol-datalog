@@ -1,16 +1,9 @@
-import {
-    assert,
-    ASTContext,
-    ASTNode,
-    ASTNodeConstructor,
-    ContractDefinition,
-    FunctionDefinition,
-    pp
-} from "solc-typed-ast";
+import { assert, ASTContext, ASTNode } from "solc-typed-ast";
 import * as DL from "souffle.ts";
+import { pp } from "./pp";
 
-export type RelationFieldT = ASTNodeConstructor<ASTNode> | string;
-export type RelationField = ASTNode | string | number | boolean | string[];
+export type RelationFieldObj = { [key: string]: RelationField };
+export type RelationField = ASTNode | string | number | boolean | ASTNode[] | RelationFieldObj;
 
 const stringTypeAliases = new Set([
     "ContractKind",
@@ -36,8 +29,12 @@ function liftValue(val: DL.FieldVal, type: DL.DatalogType, ctx: ASTContext): Rel
     }
 
     if (type === DL.NumberT) {
-        assert(typeof val === "number", `Type mismatch. Expected string not {0}`, val as any);
-        return val;
+        assert(
+            typeof val === "number" || typeof val === "bigint",
+            `Type mismatch. Expected number-like not {0}`,
+            val as any
+        );
+        return Number(val);
     }
 
     if (type instanceof DL.SubT) {
@@ -52,33 +49,51 @@ function liftValue(val: DL.FieldVal, type: DL.DatalogType, ctx: ASTContext): Rel
         }
         if (type.name === "id" || type.name.endsWith("Id")) {
             // ASTNode
-            assert(typeof val === "number", `Type mismatch. Expected number not {0}`, val as any);
-            return ctx.locate(val);
+            assert(
+                typeof val === "number" || typeof val === "bigint",
+                `Type mismatch. Expected number-like not {0}`,
+                val as any
+            );
+            return ctx.locate(Number(val));
         }
 
         if (type.name.endsWith("Id")) {
             // ASTNode
-            assert(typeof val === "number", `Type mismatch. Expected number not {0}`, val as any);
-            return ctx.locate(val);
+            assert(
+                typeof val === "number" || typeof val === "bigint",
+                `Type mismatch. Expected number-like not {0}`,
+                val as any
+            );
+            return ctx.locate(Number(val));
         }
     }
 
     if (type instanceof DL.RecordT) {
         if (type.name === "NumPath") {
-            const res: string[] = [];
+            const res: ASTNode[] = [];
 
             while (val !== null) {
-                const fun = ctx.locate(Number((val as DL.RecordVal).head)) as FunctionDefinition;
-                const name =
-                    fun.vScope instanceof ContractDefinition
-                        ? `${fun.vScope.name}:${fun.name}`
-                        : fun.name;
-                res.push(name);
+                const node = ctx.locate(Number((val as DL.RecordVal).head));
+                res.push(node);
                 val = (val as DL.RecordVal).tail;
             }
 
             return res;
         }
+    }
+
+    if (type instanceof DL.ADTT) {
+        const res: RelationFieldObj = {};
+        const branch = (val as DL.ADTVal)[0];
+        const vals = (val as DL.ADTVal)[1];
+
+        res["_branch"] = branch;
+
+        for (const [name, fieldT] of type.branch(branch)) {
+            res[name] = liftValue(vals[name], fieldT, ctx);
+        }
+
+        return res;
     }
 
     assert(false, `Unknown datalog type ${type.name}`);

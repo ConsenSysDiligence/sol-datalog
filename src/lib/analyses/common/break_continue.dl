@@ -1,0 +1,154 @@
+// Helper relations for dealing with break and continue
+
+// True if nd is a loop statement.
+.decl isLoop(node: id)
+isLoop(id) :- (ForStatement(id) ; WhileStatement(id) ; DoWhileStatement(id)).
+
+// Return the closest enclosing loop `loopId` to `node`
+.decl enclosingLoop(node: id, loopId: id)
+
+enclosingLoop(id, id) :- isLoop(id).
+enclosingLoop(id, loopId) :- 
+    parent(ptId, id),
+    (!isLoop(id)),
+    enclosingLoop(ptId, loopId).
+
+// Relate the body of a loop to the loop
+.decl loopBody(loopId: id, bodyId: StatementId)
+loopBody(loopId, bodyId) :-
+    WhileStatement_body(loopId, bodyId);
+    ForStatement_body(loopId, bodyId);
+    DoWhileStatement_body(loopId, bodyId).
+
+// Helper relation to determine if a Stmt `s` may breakout to the enclosing loop
+// `loopId`.
+.decl mayBreak(s: id, loopId: id)
+mayBreak(s, loopId) :-
+    Break(s), enclosingLoop(s, loopId).
+
+mayBreak(s, loopId) :-
+    AnyBlock_statements(s, stmt, _), mayBreak(stmt, loopId).
+
+mayBreak(s, loopId) :-
+    IfStatement_trueBody(s, trueBody), mayBreak(trueBody, loopId);
+    IfStatement_falseBody(s, falseBody, 1), mayBreak(falseBody, loopId).
+
+mayBreak(s, loopId) :-
+    TryStatement_clauses(s, clauseId, _),
+    TryCatchClause_block(clauseId, blockid),
+    mayBreak(blockId, loopId).
+
+// Helper relation to determine if a Stmt `s` may continue to the next iteration of the
+// enclosing loop `loopId`
+.decl mayContinue(s: id, loopId: id)
+mayContinue(s, loopId) :-
+    Continue(s), enclosingLoop(s, loopId).
+
+mayContinue(s, loopId) :-
+    AnyBlock_statements(s, stmt, _), mayContinue(stmt, loopId).
+
+mayContinue(s, loopId) :-
+    IfStatement_trueBody(s, trueBody), mayContinue(trueBody, loopId);
+    IfStatement_falseBody(s, falseBody, 1), mayContinue(falseBody, loopId).
+
+mayContinue(s, loopId) :-
+    TryStatement_clauses(s, clauseId, _),
+    TryCatchClause_block(clauseId, blockid),
+    mayContinue(blockId, loopId).
+
+// Relation giving the last non-breaking top-level (i.e. dominating) statement
+// in a body.
+.decl allStmtsNonBreakUntil(loop: id, stmt: id)
+allStmtsNonBreakUntil(loop, stmt) :-
+    loopBody(loop, body),
+    AnyBlock_statements(body, stmt, 0),
+    !mayBreak(stmt, loop).
+
+allStmtsNonBreakUntil(loop, stmt) :-
+    loopBody(loop, body),
+    AnyBlock_statements(body, stmt, i),
+    i > 0,
+    AnyBlock_statements(body, prevStmt, i - 1),
+    allStmtsNonBreakUntil(loop, prevStmt),
+    !mayBreak(stmt, loop).
+
+// Relation giving the last non-continuing top-level (i.e. dominating) statement
+// in a body.
+.decl allStmtsNonContinueUntil(loop: id, stmt: id)
+allStmtsNonContinueUntil(loop, stmt) :-
+    loopBody(loop, body),
+    AnyBlock_statements(body, stmt, 0),
+    !mayContinue(stmt, loop).
+
+allStmtsNonContinueUntil(loop, stmt) :-
+    loopBody(loop, body),
+    AnyBlock_statements(body, stmt, i),
+    i > 0,
+    AnyBlock_statements(body, prevStmt, i - 1),
+    allStmtsNonContinueUntil(loop, prevStmt),
+    !mayContinue(stmt, loop).
+
+// Relation specifying the first top-level (i.e. dominating) statement in a body
+// that may break.
+.decl firstMayBreakStmt(loop: id, stmt: id)
+firstMayBreakStmt(loop, stmt) :-
+    loopBody(loop, body),
+    AnyBlock_statements(body, stmt, 0),
+    mayBreak(stmt, loop).
+
+firstMayBreakStmt(loop, stmt) :-
+    loopBody(loop, body),
+    AnyBlock_statements(body, stmt, i),
+    i > 0,
+    mayBreak(stmt, loop),
+    AnyBlock_statements(body, prevStmt, i - 1),
+    allStmtsNonBreakUntil(loop, prevStmt).
+
+// Relation specifying the first top-level (i.e. dominating) statement in a body
+// that may continue.
+.decl firstMayContinueStmt(body: id, stmt: id)
+firstMayContinueStmt(loop, stmt) :-
+    loopBody(loop, body),
+    AnyBlock_statements(body, stmt, 0),
+    mayContinue(stmt, loop).
+
+firstMayContinueStmt(loop, stmt) :-
+    loopBody(loop, body),
+    AnyBlock_statements(body, stmt, i),
+    i > 0,
+    mayContinue(stmt, loop),
+    AnyBlock_statements(body, prevStmt, i - 1),
+    allStmtsNonContinueUntil(loop, prevStmt).
+
+.decl findLastDominatingNodeInBreakStmt(S: id, last: id)
+findLastDominatingNodeInBreakStmt(s, s) :-
+    Break(s).
+
+findLastDominatingNodeInBreakStmt(s, last) :-
+    enclosingLoop(s, loop),
+    isBlock(s),
+    firstMayBreakStmt(loop, stmt),
+    findLastDominatingNodeInBreakStmt(stmt, last).
+
+findLastDominatingNodeInBreakStmt(s, last) :-
+    IfStatement_condition(s, last).
+
+findLastDominatingNodeInBreakStmt(s, last) :-
+    TryStatement_externalCall(s, last).
+
+
+.decl findLastDominatingNodeInContinueStmt(S: id, last: id)
+findLastDominatingNodeInContinueStmt(s, s) :-
+    Continue(s).
+
+findLastDominatingNodeInContinueStmt(s, last) :-
+    isBlock(s),
+    enclosingLoop(s, loop),
+    firstMayContinueStmt(loop, stmt),
+    findLastDominatingNodeInContinueStmt(stmt, last).
+
+findLastDominatingNodeInContinueStmt(s, last) :-
+    IfStatement_condition(s, last).
+
+findLastDominatingNodeInContinueStmt(s, last) :-
+    TryStatement_externalCall(s, last).

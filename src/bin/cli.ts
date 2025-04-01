@@ -20,7 +20,7 @@ import {
     downloadSupportedCompilers,
     isExact
 } from "solc-typed-ast";
-import { analyze, buildDatalog, getRelation } from "../lib";
+import { analyze, getRelation } from "../lib";
 
 const pkg = require("../../package.json");
 
@@ -283,13 +283,6 @@ async function main() {
     const reader = new ASTReader();
     const units = reader.read(result.data);
     const infer = new InferType(result.compilerVersion as string);
-
-    const datalog = buildDatalog(units, infer);
-
-    if (options.dump) {
-        console.log(datalog);
-        return;
-    }
 
     if (options.dumpAnalyses) {
         const relations = options.dumpAnalyses.map(getRelation);

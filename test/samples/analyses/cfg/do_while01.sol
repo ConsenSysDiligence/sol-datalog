@@ -5,10 +5,10 @@ contract Foo {
         uint x = 1;
         uint sum = 0;
 
-        while (x < 10) {
+        do {
             sum += x;
             x = x + 1;
-        }
+        } while (x < 10);
 
         return sum;
     }
