@@ -13,6 +13,7 @@ export type PPIsh =
     | null
     | undefined
     | PPIsh[]
+    | { [key: string]: PPIsh }
     | Set<PPIsh>
     | Map<PPIsh, PPIsh>
     | Iterable<PPIsh>
@@ -58,6 +59,16 @@ export function pp(value: PPIsh): string {
             return `${value.vScope instanceof sol.ContractDefinition ? value.vScope.name + ":" : ""}${value.name}`;
         }
         return sol.pp(value);
+    }
+
+    if (typeof value === "object") {
+        const res: string[] = [];
+
+        for (const [key, val] of Object.entries(value)) {
+            res.push(`${key}: ${pp(val)}`);
+        }
+
+        return `{${res.join(", ")}}`;
     }
 
     if (typeof value[Symbol.iterator] === "function") {

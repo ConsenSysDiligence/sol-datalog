@@ -1,0 +1,67 @@
+// Helper relation to determine what location(s) are actually assigned/mutated
+// when an expression is assigned/mutated.
+// 
+// In complex expressions such as `a[i] = 1;` only `a` is actually changed. `i` is just read.
+// Similarly for (a,b) = (1,2) the modified variables are `a` and `b`.
+// `expr` can be any LValue.
+//
+// `modifiedLoc` relates an LValue to the locations refered to it that are changed.
+//
+// An LValue is an expression appearing as:-
+//  - the LHS of an assignment
+//  - the callee of the builtin calls .push() and .pop()
+//  - the subexpr of unary operators ++, --, delete
+.type Loc = Var { id: VariableDeclarationId }
+          | Member { base: Loc, field: symbol }
+          | Index { base: Loc }
+          | FunCall { call: FunctionCallId }
+
+.decl modifiedLoc(expr: ExpressionId, loc: Loc)
+
+// ==== Simple Identifier
+modifiedLoc(expr, $Var(vId)) :-
+    Identifier_referencedDeclaration(expr, vId),
+    VariableDeclaration(vId).
+
+// ==== Two cases for member access
+// Struct field access
+modifiedLoc(expr, $Member(baseLoc, field)):-
+    MemberAccess_memberName(expr, field),
+    MemberAccess_referencedDeclaration(expr, vId),
+    VariableDeclaration(vId),
+    parent(structDefId, vId),
+    StructDefinition(structDefId),
+    MemberAccess_expression(expr, baseE),
+    modifiedLoc(baseE, baseLoc).
+
+// Contract name var reference
+modifiedLoc(expr, $Var(vId)):-
+    MemberAccess_memberName(expr, field),
+    MemberAccess_expression(expr, baseE),
+    MemberAccess_referencedDeclaration(expr, vId),
+    VariableDeclaration_stateVariable(vId, 1).
+
+// ==== Simple Index expression
+modifiedLoc(expr, $Index(baseLoc)):-
+    IndexAccess_baseExpression(expr, baseE),
+    modifiedLoc(baseE, baseLoc).
+
+// ==== Assigning to a newly pushed index `a.push() = ..`
+// We modify a[*]
+modifiedLoc(expr, $Index(baseLoc)) :-
+    FunctionCall_expression(expr, callee),
+    MemberAccess_memberName(callee, "push"),
+    MemberAccess_referencedDeclaration(callee, -1),
+    MemberAccess_expression(callee, baseE),
+    modifiedLoc(baseE, baseLoc).
+
+// ==== Assigning to tuples
+modifiedLoc(expr, loc) :-
+    TupleExpression_components(expr, compId, _, _),
+    modifiedLoc(compId, loc).
+
+// ==== Assigning to the result of a function call. Typically the function returns a pointer
+modifiedLoc(expr, $FunCall(expr)):-
+    FunctionCall_expression(expr, callee),
+    !(MemberAccess_memberName(callee, "push");
+     MemberAccess_memberName(callee, "pop")).

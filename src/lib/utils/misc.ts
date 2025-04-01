@@ -120,3 +120,14 @@ export function searchRecursive(targetPath: string, filter: (entry: string) => b
 
     return results;
 }
+
+export function makeFileMap(units: sol.SourceUnit[]): Map<number, Uint8Array> {
+    const fileMap = new Map();
+
+    for (const unit of units) {
+        const unitSource = fse.readFileSync(unit.absolutePath);
+        fileMap.set(unit.sourceListIndex, unitSource);
+    }
+
+    return fileMap;
+}

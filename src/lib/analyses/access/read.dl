@@ -17,6 +17,15 @@
         FunctionCall_arguments(eId, argId, _),
         readExpr(argId, vId, locId).
 
+    /// In `a.push() = ...` a is also read (we read the length)
+    readAssignmentLhs(eId, vId, locId) :-
+        FunctionCall_expression(eId, callee),
+        MemberAccess_memberName(callee, "push"),
+        MemberAccess_referencedDeclaration(callee, -1),
+        MemberAccess_expression(callee, baseE),
+        readExpr(baseE, vId, locId).
+
+
     /// Recursive case for member access
     readAssignmentLhs(eId, vId, locId) :-
         MemberAccess_expression(eId, subExpressionId), readAssignmentLhs(subExpressionId, vId, locId).
@@ -32,6 +41,14 @@
 
     readExpr(eId, vId, locId) :-
         Assignment_leftHandSide(eId, rhsId), readAssignmentLhs(rhsId, vId, locId).
+
+    // For mutating assignments like "+=" the LHS is also read
+    readExpr(eId, vId, locId) :-
+        Assignment_operator(eId, operator),
+        (match(".=", operator) ;
+         match("..=", operator)),
+        Assignment_leftHandSide(eId, lhsId), 
+        readExpr(lhsId, vId, locId).
 
     readExpr(eId, vId, locId) :-
         BinaryOperation_leftExpression(eId, lId), readExpr(lId, vId, locId).

@@ -1,0 +1,32 @@
+{
+    "access.readFunction": {
+        "fmt": "Function {0}.name reads variable {1}.name at location {2}.parent.source",
+        "data": [
+            "Function ref reads variable z at location return z",
+            "Function main reads variable z at location z.push",
+            "Function main reads variable z at location z.push",
+            "Function main reads variable x at location x++"
+        ]
+    },
+    "access.writesFunction": {
+        "fmt": "Function {0}.name writes variable {1}.name at location {2}.source",
+        "data": [
+            "Function main writes variable z at location z.push(0)",
+            "Function main writes variable z at location z[0] = 1",
+            "Function main writes variable z at location Foo.z[0] = 2",
+            "Function main writes variable z at location z.push()",
+            "Function main writes variable z at location z.push() = 1",
+            "Function main writes variable z at location delete z[0]",
+            "Function main writes variable x at location uint x",
+            "Function main writes variable x at location x = 1",
+            "Function main writes variable x at location (x, ,y) = (1,2,3)",
+            "Function main writes variable x at location delete x",
+            "Function main writes variable x at location x++",
+            "Function main writes variable y at location uint y",
+            "Function main writes variable y at location (x, ,y) = (1,2,3)",
+            "Function main writes variable f at location F memory f",
+            "Function main writes variable f at location f.t = 1",
+            "Function main writes variable f at location delete f.t"
+        ]
+    }
+}
