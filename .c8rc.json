@@ -9,6 +9,7 @@
         "**/.compiler_cache/**",
         "**/scripts/**",
         "src/bin/cli.ts",
+        "src/bin/llm-features.ts",
         "src/lib/souffle/value_header.ts",
         "src/lib/souffle/value_parser.ts"
     ],
