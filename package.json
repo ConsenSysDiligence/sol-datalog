@@ -32,7 +32,7 @@
         "csv-parse": "^5.5.3",
         "dotenv": "^16.4.5",
         "fs-extra": "^11.2.0",
-        "solc-typed-ast": "^18.2.4",
+        "solc-typed-ast": "^18.2.5",
         "souffle.ts": "^0.3.1",
         "sqlite": "^5.1.1",
         "sqlite3": "^5.1.7"

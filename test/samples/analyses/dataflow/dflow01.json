@@ -1,0 +1,23 @@
+{
+    "dataflow.flows": {
+        "fmt": "Value of {2}.name flows from {0}.source to {1}.parent.source",
+        "data": [
+            "Value of x flows from uint x to x + 1",
+            "Value of y flows from uint y to z + y",
+            "Value of z flows from uint z = x + 1 to z + y",
+            "Value of z flows from z = z + y to i < z",
+            "Value of sum flows from uint sum = 0 to sum += i",
+            "Value of sum flows from uint sum = 0 to sum + t",
+            "Value of i flows from uint i = 0 to i < z",
+            "Value of i flows from uint i = 0 to i ++",
+            "Value of i flows from uint i = 0 to sum += i",
+            "Value of i flows from i ++ to i < z",
+            "Value of i flows from i ++ to i ++",
+            "Value of i flows from i ++ to sum += i",
+            "Value of sum flows from sum += i to sum += i",
+            "Value of sum flows from sum += i to sum + t",
+            "Value of t flows from t = 2 to 2 * t",
+            "Value of t flows from t = 1 + (t = 2) + 2 * t to sum + t"
+        ]
+    }
+}

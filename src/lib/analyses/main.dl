@@ -2,3 +2,4 @@
 .init access = Access
 .init cg = CallGraph
 .init cfg = CFG
+.init dataflow = Dataflow

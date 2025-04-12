@@ -1,0 +1,40 @@
+.comp Dataflow {
+    // Helper relation, that given a `var` and an expr/stmt `defNode` that modifies `var`,
+    // identifies the set of all expressions/statements that:
+    //  a) are reachable from `defNode` along a path that doesnt change `var`
+    //  b) also don't modify `var`
+    .decl reaches(var: VariableDeclarationId, defNode: id, useNode: id)
+
+    // Base case - direct edge
+    reaches(var, defNode, useNode) :-
+        access.writesVar(defNode, var, _),
+        cfg.succ.edge(defNode, useNode),
+        !access.writesVar(useNode, var, _).
+
+    // Base case - function parameters reach the first expr/stmt in the function.
+    reaches(var, var, defNode) :-
+        hasParam(fId, var),
+        hasBody(fId, bodyId),
+        cfg.succ.succ_first(bodyId, defNode).
+
+    // Inductive case
+    reaches(var, defNode, useNode) :-
+        reaches(var, defNode, x),
+        cfg.succ.edge(x, useNode),
+        !access.writesVar(useNode, var, _).
+
+    // Relation stating that the value of variable `var` resulting from the modification at 
+    // expression/statement 'from' may flow to expression/statement `to` that reads `var`.
+    .decl flows(from: id, to: id, var: VariableDeclarationId)
+
+    flows(from, to, var) :-
+        reaches(var, from, to),
+        access.readsVar(to, var).
+
+    // There is an implicit assumption I'm making here that in any expr/stmt that both reads and writes a variable,
+    // the read always comes before the write
+    flows(from, to, var) :-
+        reaches(var, from, x),
+        cfg.succ.edge(x, to),
+        access.readsVar(to, var).
+}

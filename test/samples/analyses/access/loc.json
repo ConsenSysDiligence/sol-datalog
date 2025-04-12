@@ -1,5 +1,5 @@
 {
-    "access.readFunction": {
+    "access.readsFunction": {
         "fmt": "Function {0}.name reads variable {1}.name at location {2}.parent.source",
         "data": [
             "Function ref reads variable z at location return z",

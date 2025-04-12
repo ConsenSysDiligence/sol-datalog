@@ -61,6 +61,13 @@ export function accumulateNodeFacts(nd: sol.ASTNode, infer: sol.InferType, fs: F
                 translateVal(nd.fullyImplemented)
             ])
         );
+        fs.addFacts(
+            new Fact(rln.ContractDefinition_baseSlotExpression, [
+                nd.id,
+                translateVal(nd.baseSlotExpression === undefined ? -1 : nd.baseSlotExpression),
+                translateVal(nd.baseSlotExpression !== undefined)
+            ])
+        );
     } else if (nd instanceof sol.VariableDeclaration) {
         fs.addFacts(new Fact(rln.VariableDeclaration, [nd.id]), new Fact(rln.src, [nd.id, nd.src]));
         fs.addFacts(new Fact(rln.VariableDeclaration_constant, [nd.id, translateVal(nd.constant)]));

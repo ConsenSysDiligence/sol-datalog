@@ -1,197 +1,26 @@
 .comp Read {
-    /// ============== EXPRESSIONS ============================
-    /// Specifies whether the variable vId may be read while evaluating the
-    /// expression eId
-    .decl readExpr(eId: ExpressionId, vId: VariableDeclarationId, locId: id)
+    .decl readsVar(id: ExpressionId, vId: VariableDeclarationId)
+    readsVar(id, vId) :-
+        Identifier_referencedDeclaration(id, vId),
+        VariableDeclaration(vId),
+        !LValue(id).
 
-    /// ============== readAssignemtnLHS helper ============================
-    /// Helper relation for whether a variable id is read on the LHS of an assignment
-    .decl readAssignmentLhs(eId: ExpressionId, vId: VariableDeclarationId, locId: id)
+    readsVar(id, vId) :-
+        MemberAccess_referencedDeclaration(id, vId),
+        VariableDeclaration(vId),
+        !StructDefinition_members(_, vId, _),
+        !LValue(id).
 
-    /// In `a[E] =...` stuff in E is read
-    readAssignmentLhs(eId, vId, locId) :-
-        IndexAccess_indexExpression(eId, ieId, 1), readExpr(ieId, vId, locId).
-
-    /// In `foo(args) = ...` stuff in args is read
-    readAssignmentLhs(eId, vId, locId) :-
-        FunctionCall_arguments(eId, argId, _),
-        readExpr(argId, vId, locId).
-
-    /// In `a.push() = ...` a is also read (we read the length)
-    readAssignmentLhs(eId, vId, locId) :-
-        FunctionCall_expression(eId, callee),
-        MemberAccess_memberName(callee, "push"),
-        MemberAccess_referencedDeclaration(callee, -1),
-        MemberAccess_expression(callee, baseE),
-        readExpr(baseE, vId, locId).
-
-
-    /// Recursive case for member access
-    readAssignmentLhs(eId, vId, locId) :-
-        MemberAccess_expression(eId, subExpressionId), readAssignmentLhs(subExpressionId, vId, locId).
-
-    /// Recursive case for tuples
-    readAssignmentLhs(eId, vId, locId) :-
-        TupleExpression_components(eId, compId, _, _), readAssignmentLhs(compId, vId, locId).
-
-    /// ============== readExpr ============================
-
-    readExpr(eId, vId, locId) :-
-        Assignment_rightHandSide(eId, rhsId), readExpr(rhsId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        Assignment_leftHandSide(eId, rhsId), readAssignmentLhs(rhsId, vId, locId).
-
-    // For mutating assignments like "+=" the LHS is also read
-    readExpr(eId, vId, locId) :-
-        Assignment_operator(eId, operator),
-        (match(".=", operator) ;
-         match("..=", operator)),
-        Assignment_leftHandSide(eId, lhsId), 
-        readExpr(lhsId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        BinaryOperation_leftExpression(eId, lId), readExpr(lId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        BinaryOperation_rightExpression(eId, rId), readExpr(rId, vId, locId).
-
-    readExpr(eId, vId, eId) :-
-        Identifier_referencedDeclaration(eId, vId), VariableDeclaration(vId).
-
-    readExpr(eId, vId, locId) :-
-        FunctionCall_expression(eId, calleeId), readExpr(calleeId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        FunctionCall_arguments(eId, argId, _), readExpr(argId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        Conditional_condition(eId, cId), readExpr(cId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        Conditional_falseExpression(eId, fId), readExpr(fId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        Conditional_trueExpression(eId, tId), readExpr(tId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        FunctionCallOptions_expression(eId, subId), readExpr(subId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        FunctionCallOptions_options(eId, _, optId), readExpr(optId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        UnaryOperation_subExpression(eId, subId),
-        UnaryOperation_operator(eId, operator), operator != "delete",
-        readExpr(subId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        UnaryOperation_subExpression(eId, subId),
-        UnaryOperation_operator(eId, operator), operator = "delete",
-        readAssignmentLhs(subId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        IndexAccess_baseExpression(eId, bId), readExpr(bId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        IndexAccess_indexExpression(eId, iId, 1), readExpr(iId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        MemberAccess_expression(eId, baseId), readExpr(baseId, vId, locId).
-
-    readExpr(eId, vId, eId) :-
-        MemberAccess_referencedDeclaration(eId, vId), VariableDeclaration(vId).
-
-    readExpr(eId, vId, locId) :-
-        TupleExpression_components(eId, compId, _, _), readExpr(compId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        IndexRangeAccess_baseExpression(eId, baseId), readExpr(baseId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        IndexRangeAccess_startExpression(eId, sId, 1), readExpr(sId, vId, locId).
-
-    readExpr(eId, vId, locId) :-
-        IndexRangeAccess_endExpression(eId, eId, 1), readExpr(sId, vId, locId).
-
-    /// ============== STATEMENTS ============================
-    /// Specifies whether the variable vId may be read while evaluating the
-    /// statement sId
-    .decl readStmt(sId: StatementId, vId: VariableDeclarationId, locId: id)
-
-    readStmt(sId, vId, locId) :-
-        ExpressionStatement_expression(sId, eId), readExpr(eId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        ForStatement_initializationExpression(sId, subId, 1), readExpr(subId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        ForStatement_condition(sId, subId, 1), readExpr(subId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        ForStatement_loopExpression(sId, subId, 1), readStmt(subId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        ForStatement_body(sId, bodyId), readStmt(bodyId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        TryStatement_externalCall(sId, callId), readExpr(callId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        TryStatement_clauses(sId, clauseId, _), readStmt(clauseId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        EmitStatement_eventCall(sId, callId), readExpr(callId, vId, locId).
-
-    /// TODO: Do inline assembly!!
-    readStmt(sId, vId, locId) :-
-        Block_statements(sId, subId, _), readStmt(subId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        RevertStatement_errorCall(sId, callId), readExpr(callid, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        UncheckedBlock_statements(sId, subId, _), readStmt(subId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        Return_expression(sId, exprId, 1), readExpr(exprId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        WhileStatement_condition(sId, condId), readExpr(condId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        WhileStatement_body(sId, bodyId), readStmt(bodyId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        VariableDeclarationStatement_initialValue(sId, exprId, 1), readExpr(exprId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        IfStatement_condition(sId, cId), readExpr(cId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        IfStatement_trueBody(sId, tId), readStmt(tId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        IfStatement_falseBody(sId, fId, 1), readStmt(fId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        TryCatchClause_block(sId, bId), readStmt(bId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        DoWhileStatement_condition(sId, cId), readExpr(cId, vId, locId).
-
-    readStmt(sId, vId, locId) :-
-        DoWhileStatement_body(sId, bId), readStmt(bId, vId, locId).
-
-    /// ============== Function/Modifiers ============================
-    .decl readModifier(mId: ModifierDefinitionId, vId: VariableDeclarationId, locId: id)
-    readModifier(mId, vId, locId) :-
-        ModifierDefinition_body(mId, bodyId, 1), readStmt(bodyId, vId, locId).
-
-    .decl readFunction(fId: FunctionDefinitionId, vId: VariableDeclarationId, locId: id)
-    readFunction(fId, vId, locId) :-
-        hasBody(fId, bodyId), readStmt(bodyId, vId, locId).
+    /// ============== Functions ============================
+    .decl readsFunction(fId: FunctionDefinitionId, vId: VariableDeclarationId, locId: id)
+    readsFunction(fId, vId, locId) :-
+        FunctionDefinition(fId),
+        ancestor(fId, locId),
+        readsVar(locId, vId).
         
-    readFunction(fId, vId, locId) :-
-        FunctionDefinition_modifiers(fId, mId, _), ModifierInvocation_arguments(mId, eId, _), readExpr(eId, vId, locId).
+    readsFunction(fId, vId, locId) :-
+        FunctionDefinition_modifiers(fId, mId, _),
+        ModifierInvocation_vReferencedDeclaration(mId, modDefId),
+        ancestor(modDefId, locId),
+        readsVar(locId, vId).
 }

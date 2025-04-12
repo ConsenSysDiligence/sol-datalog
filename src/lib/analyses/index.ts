@@ -5,7 +5,6 @@ import {
     FunctionCallId,
     FunctionDefinitionId,
     ModifierDefinitionId,
-    StatementId,
     VariableDeclarationId
 } from "../../gen/ast_relations";
 
@@ -89,30 +88,19 @@ export const AVAILABLE_ANALYSES: dl.Relation[] = [
         ["nod", IdT],
         ["loc", LocT]
     ]),
-    new dl.Relation("access.readExpr", [
+    new dl.Relation("access.readsVar", [
         ["eId", ExpressionId],
-        ["vId", VariableDeclarationId],
-        ["locId", IdT]
+        ["vId", VariableDeclarationId]
     ]),
-    new dl.Relation("access.readStmt", [
-        ["sId", StatementId],
-        ["vId", VariableDeclarationId],
-        ["locId", IdT]
-    ]),
-    new dl.Relation("access.readModifier", [
-        ["mId", ModifierDefinitionId],
-        ["vId", VariableDeclarationId],
-        ["locId", IdT]
-    ]),
-    new dl.Relation("access.readFunction", [
+    new dl.Relation("access.readsFunction", [
         ["fId", FunctionDefinitionId],
         ["vId", VariableDeclarationId],
         ["locId", IdT]
     ]),
-    new dl.Relation("access.readFunction", [
-        ["fId", FunctionDefinitionId],
-        ["vId", VariableDeclarationId],
-        ["locId", IdT]
+    new dl.Relation("dataflow.flows", [
+        ["from", IdT],
+        ["to", IdT],
+        ["var", VariableDeclarationId]
     ]),
     new dl.Relation("hasParam", [
         ["fId", FunctionDefinitionId],

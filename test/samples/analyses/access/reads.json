@@ -1,0 +1,18 @@
+{
+    "access.readsVar": {
+        "fmt": "Expression {0}.source reads variable {1}.name (inside {0}.parent.source)",
+        "data": [
+            "Expression a reads variable a (inside a[1])",
+            "Expression f reads variable f (inside f.y)",
+            "Expression sVar reads variable sVar (inside uint x = sVar)"
+        ]
+    },
+    "access.readsFunction": {
+        "fmt": "Function {0}.name reads variable {1}.name inside {2}.parent.source",
+        "data": [
+            "Function lhs reads variable a inside a[1]",
+            "Function lhs reads variable f inside f.y",
+            "Function withMod reads variable sVar inside uint x = sVar"
+        ]
+    }
+}
