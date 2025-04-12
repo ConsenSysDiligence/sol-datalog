@@ -1,0 +1,40 @@
+.type Shape = Var { id: VariableDeclarationId }
+          | Member { base: Shape, field: symbol }
+          | Index { base: Shape }
+          | FunCall { call: FunctionCallId }
+
+.decl accessShape(expr: ExpressionId, varId: VariableDeclarationId, shape: Shape)
+accessShape(expr, vId, $Var(vId)) :-
+    Identifier_referencedDeclaration(expr, vId),
+    VariableDeclaration(vId).
+
+// ==== Two cases for member access
+// Struct field access
+accessShape(expr, vId, $Member(baseLoc, field)):-
+    MemberAccess_memberName(expr, field),
+    MemberAccess_referencedDeclaration(expr, fieldDefId),
+    StructDefinition_members(_, fieldDefId, _),
+    MemberAccess_expression(expr, baseE),
+    accessShape(baseE, vId, baseLoc).
+
+// Contract name var reference
+accessShape(expr, vId, $Var(vId)):-
+    MemberAccess_memberName(expr, field),
+    MemberAccess_expression(expr, baseE),
+    MemberAccess_referencedDeclaration(expr, vId),
+    VariableDeclaration_stateVariable(vId, 1).
+
+// ==== Simple Index expression
+accessShape(expr, vId, $Index(baseShape)):-
+    IndexAccess_baseExpression(expr, baseE),
+    accessShape(baseE, vId, baseShape).
+
+// ==== Special case for a.push()
+accessShape(expr, vId, shape) :-
+    FunctionCall_expression(expr, callee),
+    (MemberAccess_memberName(callee, "push");
+    MemberAccess_memberName(callee, "pop")),
+    MemberAccess_referencedDeclaration(callee, -1),
+    MemberAccess_expression(callee, x),
+    accessShape(x, vId, baseShape),
+    shape = $Index(baseShape).

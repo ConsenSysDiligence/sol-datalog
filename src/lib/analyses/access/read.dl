@@ -3,13 +3,13 @@
     readsVar(id, vId) :-
         Identifier_referencedDeclaration(id, vId),
         VariableDeclaration(vId),
-        !LValue(id).
+        !LValue(id, _).
 
     readsVar(id, vId) :-
         MemberAccess_referencedDeclaration(id, vId),
         VariableDeclaration(vId),
         !StructDefinition_members(_, vId, _),
-        !LValue(id).
+        !LValue(id, _).
 
     /// ============== Functions ============================
     .decl readsFunction(fId: FunctionDefinitionId, vId: VariableDeclarationId, locId: id)

@@ -3,35 +3,36 @@
 //      - +=, -= ...
 //      - ++/--
 //      - calls to .push and .pop (the length must first be read to be incremented/decremented)
-.decl LRValue(id: ExpressionId)
+.decl LRValue(id: ExpressionId, in: ExpressionId)
 
 // === Top-level cases:
 // Assignment lhs
-LRValue(x) :-
+LRValue(x, aId) :-
     Assignment_leftHandSide(aId, x),
     Assignment_operator(aId, op),
     (match(".=", op);
      match("..=", op)).
 
-LRValue(x) :-
-    UnaryOperation_operator(x, "++");
-    UnaryOperation_operator(x, "--").
+LRValue(x, uop) :-
+    (UnaryOperation_operator(uop, "++");
+    UnaryOperation_operator(uop, "--")),
+    UnaryOperation_subExpression(uop, x).
 
-LRValue(x) :-
-    FunctionCall_expression(_, callee),
+LRValue(x, call) :-
+    FunctionCall_expression(call, callee),
     (MemberAccess_memberName(callee, "push");
     MemberAccess_memberName(callee, "pop")),
     MemberAccess_expression(callee, x).
     
 // === Inductive cases
-LRValue(x) :-
+LRValue(x, z) :-
     MemberAccess_expression(y, x),
-    LRValue(y).
+    LRValue(y, z).
 
-LRValue(x) :-
+LRValue(x, z) :-
     IndexAccess_baseExpression(y, x),
-    LRValue(y).
+    LRValue(y, z).
 
-LRValue(x) :-
+LRValue(x, z) :-
     TupleExpression_components(y, x, _, _),
-    LRValue(y).
+    LRValue(y, z).

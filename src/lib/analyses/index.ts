@@ -13,7 +13,7 @@ export const ANALYSES_DIR = __dirname;
 export const IdT = new dl.SubT("id", dl.NumberT);
 
 const NumPathT = new dl.RecordT("NumPath", [["head", dl.NumberT]]);
-const LocT = new dl.ADTT("Loc", [
+const ShapeT = new dl.ADTT("Shape", [
     ["Var", [["id", VariableDeclarationId]]],
     [
         "Member",
@@ -27,8 +27,8 @@ const LocT = new dl.ADTT("Loc", [
 ]);
 
 // Fixup recursive type references
-LocT.branches[1][1][0][1] = LocT;
-LocT.branches[2][1][0][1] = LocT;
+ShapeT.branches[1][1][0][1] = ShapeT;
+ShapeT.branches[2][1][0][1] = ShapeT;
 //LocT.branches[3][1][0][1] = LocT;
 
 NumPathT.fields.push(["tail", NumPathT]);
@@ -73,20 +73,16 @@ export const AVAILABLE_ANALYSES: dl.Relation[] = [
         ["prev", IdT],
         ["next", IdT]
     ]),
-    new dl.Relation("access.writes", [
-        ["id", IdT],
-        ["loc", LocT]
-    ]),
     new dl.Relation("access.writesVar", [
         ["id", IdT],
         ["varId", VariableDeclarationId],
-        ["loc", LocT]
+        ["loc", ShapeT]
     ]),
     new dl.Relation("access.writesFunction", [
         ["fId", FunctionDefinitionId],
         ["varId", VariableDeclarationId],
         ["nod", IdT],
-        ["loc", LocT]
+        ["loc", ShapeT]
     ]),
     new dl.Relation("access.readsVar", [
         ["eId", ExpressionId],
@@ -109,6 +105,11 @@ export const AVAILABLE_ANALYSES: dl.Relation[] = [
     new dl.Relation("hasModifier", [
         ["fId", FunctionDefinitionId],
         ["vId", ModifierDefinitionId]
+    ]),
+    new dl.Relation("accessShape", [
+        ["expr", ExpressionId],
+        ["varId", VariableDeclarationId],
+        ["shape", ShapeT]
     ])
 ];
 

@@ -1,73 +1,60 @@
 .comp Write {
-    .type WriteNodeId = ExpressionId | StatementId | ModifierDefinitionId | FunctionDefinitionId
+    // Helper relation specific to Write. Identifies the top-level LValue being modified.
+    // Doesnt recurse into member access/indexes.
+    .decl LRValueWrite(id: ExpressionId, in: ExpressionId)
 
-    /// ============== EXPRESSIONS ============================
-    /// Specifies whether the variable vId may be modified while evaluating the
-    /// expression eId
-    .decl writes(eId: WriteNodeId, loc: Loc)
+    // === Top-level cases:
+    // Assignment lhs
+    LRValueWrite(x, aId) :-
+        Assignment_leftHandSide(aId, x).
+        
+    // `delete E`
+    LRValueWrite(x, uop) :-
+        UnaryOperation_operator(uop, "delete"),
+        UnaryOperation_subExpression(uop, x).
 
-    writes(eId, loc) :-
-        Assignment_leftHandSide(eId, lhs),
-        modifiedLoc(lhs, loc).
+    // Unary ops - `++`, `--`
+    LRValueWrite(x, uop) :-
+        (UnaryOperation_operator(uop, "++");
+        UnaryOperation_operator(uop, "--")),
+        UnaryOperation_subExpression(uop, x).
 
-    writes(eId, loc) :-
-        (UnaryOperation_operator(eId, "++");
-         UnaryOperation_operator(eId, "--");
-         UnaryOperation_operator(eId, "delete")),
-        UnaryOperation_subExpression(eId, subId),
-        modifiedLoc(subId, loc).
-
-    writes(eId, loc) :-
-        FunctionCall_expression(eId, callee),
+    // Calls to push/pop
+    LRValueWrite(x, call) :-
+        FunctionCall_expression(call, callee),
         (MemberAccess_memberName(callee, "push");
         MemberAccess_memberName(callee, "pop")),
-        MemberAccess_expression(callee, baseE),
-        modifiedLoc(baseE, loc).
+        MemberAccess_expression(callee, x).
 
-    /// ============== Statements ============================
-    writes(sId, $Var(vId)) :-
-        VariableDeclarationStatement_assignments(sId, vId, _, _).
+    // === Inductive cases
+    LRValueWrite(x, z) :-
+        TupleExpression_components(y, x, _, _),
+        LRValueWrite(y, z).
 
-    // Helper relation to unroll the recursive location shapes written by a node.
-    // We use it to extract variable identifiers
-    .decl writesExpandLoc(id: WriteNodeId, loc: Loc, subLoc: Loc)
-    
-    writesExpandLoc(id, loc, loc) :-
-        writes(id, loc).
+    // writeVar relation identifies that a give `node` writes some `var` with some access shape.
+    .decl writesVar(node: id, var: VariableDeclarationId, shape: Shape)
 
-    writesExpandLoc(id, loc, baseLoc) :-
-        writesExpandLoc(id, loc, subLoc),
-        subLoc = $Member(baseLoc, _).
+    writesVar(node, var, shape) :-
+        LRValueWrite(x, node),
+        accessShape(x, var, shape).
 
-    writesExpandLoc(id, loc, baseLoc) :-
-        writesExpandLoc(id, loc, subLoc),
-        subLoc = $Index(baseLoc).
-
-    .decl writesVar(id: WriteNodeId, vId: VariableDeclarationId, loc: Loc)
-    writesVar(id, vId, loc) :-
-        writesExpandLoc(id, loc, $Var(vId)).
+    writesVar(node, var, $Var(var)) :-
+        VariableDeclarationStatement_assignments(node, var, _, _).
 
     /// ============== Function/Modifiers ============================
-    .decl writesFunction(fun: FunctionDefinitionId, var: VariableDeclarationId, node: id, loc: Loc)
+    .decl writesFunction(fun: FunctionDefinitionId, var: VariableDeclarationId, node: id, shape: Shape)
     
     // Function write variable in function body
-    writesFunction(fId, var, node, loc) :-
+    writesFunction(fId, var, node, shape) :-
         hasBody(fId, bodyId),
         ancestor(bodyId, node),
-        writesVar(node, var, loc).
+        writesVar(node, var, shape).
         
-    // Function write variable in modifier invocation 
-    writesFunction(fId, var, node, loc) :-
-        FunctionDefinition_modifiers(fId, mId, _),
-        ModifierInvocation_arguments(mId, node, _),
-        writesVar(node, var, loc).
-
     // Function write variable in modifier body
-    writesFunction(fId, var, node, loc) :-
+    writesFunction(fId, var, node, shape) :-
         FunctionDefinition_modifiers(fId, mId, _),
         ModifierInvocation_vReferencedDeclaration(mId, mDefId),
         ModifierDefinition_body(mDefId, bodyId, 1),
         ancestor(bodyId, node),
-        writesVar(node, var, loc).
-
+        writesVar(node, var, shape).
 }

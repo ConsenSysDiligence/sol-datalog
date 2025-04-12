@@ -1,26 +1,26 @@
 // Helper relation to establish a relation is ONLY modified, not read.
-.decl LValue(id: ExpressionId)
+.decl LValue(id: ExpressionId, in: ExpressionId)
 
 // === Top-level cases:
 // Assignment lhs
-LValue(x) :-
+LValue(x, aId) :-
     Assignment_leftHandSide(aId, x),
     Assignment_operator(aId, "=").
     
 // `delete E`
-LValue(x) :-
+LValue(x, uop) :-
     UnaryOperation_operator(uop, "delete"),
     UnaryOperation_subExpression(uop, x).
 
 // === Inductive cases
-LValue(x) :-
+LValue(x, z) :-
     MemberAccess_expression(y, x),
-    LValue(y).
+    LValue(y, z).
 
-LValue(x) :-
+LValue(x, z) :-
     IndexAccess_baseExpression(y, x),
-    LValue(y).
+    LValue(y, z).
 
-LValue(x) :-
+LValue(x, z) :-
     TupleExpression_components(y, x, _, _),
-    LValue(y).
+    LValue(y, z).
