@@ -1,6 +1,13 @@
 {
     "dataflow.flows": {
         "fmt": "Value of {2}.name flows from {0}.source to {1}.parent.source",
-        "data": []
+        "data": [
+            "Value of flag flows from bool flag to if (flag) {\\n            y = x + 1;\\n        } else {\\n            y = x + 2;\\n        }",
+            "Value of x flows from uint x to x + 1",
+            "Value of x flows from uint x to x + 2",
+            "Value of y flows from y = x + 1 to y++",
+            "Value of y flows from y = x + 2 to y++",
+            "Value of y flows from y++ to return y"
+        ]
     }
 }
