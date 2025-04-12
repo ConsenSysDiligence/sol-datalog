@@ -1,0 +1,15 @@
+{
+    "dataflow.flows": {
+        "fmt": "Value of {2}.name flows from {0}.source to {1}.parent.source",
+        "data": [
+            "Value of x flows from uint x to i++ < x",
+            "Value of sum flows from uint sum to sum += i",
+            "Value of sum flows from uint sum to return sum",
+            "Value of i flows from uint i = 0 to i++",
+            "Value of i flows from i++ to i++",
+            "Value of i flows from i++ to sum += i",
+            "Value of sum flows from sum += i to sum += i",
+            "Value of sum flows from sum += i to return sum"
+        ]
+    }
+}
