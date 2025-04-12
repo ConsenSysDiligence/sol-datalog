@@ -452,7 +452,8 @@
     // After the body we execute the condition again
     edge(prev, next) :-
         WhileStatement_body(wsId, prev),
-        WhileStatement_condition(wsId, next).
+        WhileStatement_condition(wsId, cond),
+        succ_first(cond, next).
 
     // ---- DoWhileStatement
     // Execute the body of a do-while statement first
